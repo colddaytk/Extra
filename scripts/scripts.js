@@ -2135,21 +2135,27 @@ window.et_pb_extra_load_event_fired = false;
 
 			function et_posts_carousel_init() {
 				$posts_carousel_module.each(function () {
-					var $the_carousel = $(this),
-						slideshow = $the_carousel.data('autoplay'),
-						$carousel_items = $the_carousel.find('.carousel-items'),
-						carousel_width = $carousel_items.width(),
-						$carousel_group,
-						$carousel_item = $carousel_items.find('.carousel-item'),
-						carousel_item_width = $carousel_item.width(),
-						carousel_item_thumb_width = $carousel_item.find('.post-thumbnail').width(),
-						carousel_item_thumb_height = (carousel_item_thumb_width / 15) * 9,
-						carousel_column = Math.round(carousel_width / carousel_item_width),
-						index = 0,
-						min_height = 0,
-						$current_carousel_group = $the_carousel.find('.carousel-group'),
-						skip_group_height = false,
-						current_carousel_column;
+					var $the_carousel = $(this);
+					var slideshow = $the_carousel.data('autoplay');
+					var $carousel_items = $the_carousel.find('.carousel-items');
+					var carousel_width = $carousel_items.width();
+					var $carousel_group;
+					var $carousel_item = $carousel_items.find('.carousel-item');
+					var carousel_item_widths_array = $carousel_item.map(function() {
+						return $(this).width();
+					}).get();
+					var carousel_item_width = Math.max.apply(null, carousel_item_widths_array);
+					var carousel_item_thumb_widths_array = $carousel_item.find('.post-thumbnail').map(function() {
+						return $(this).width();
+					}).get();
+					var carousel_item_thumb_width = Math.max.apply(null, carousel_item_thumb_widths_array);
+					var carousel_item_thumb_height = (carousel_item_thumb_width / 15) * 9;
+					var carousel_column = Math.round(carousel_width / carousel_item_width);
+					var index = 0;
+					var min_height = 0;
+					var $current_carousel_group = $the_carousel.find('.carousel-group');
+					var skip_group_height = false;
+					var current_carousel_column;
 
 					// Setup max-height for post thumbnail
 					$carousel_item.find('.post-thumbnail').css({
@@ -2218,6 +2224,10 @@ window.et_pb_extra_load_event_fired = false;
 								});
 							}
 						});
+					}
+
+					if ($carousel_items.data('et_pb_simple_slider')) {
+						$carousel_items.data('et_pb_simple_slider').et_slider_destroy();
 					}
 
 					$carousel_items.et_pb_simple_slider({
@@ -2317,7 +2327,13 @@ window.et_pb_extra_load_event_fired = false;
 			if ($posts_carousel_module.length) {
 				et_posts_carousel_init();
 
-				window.addEventListener('resize', et_posts_carousel_init);
+				var resizeTimer;
+				window.addEventListener('resize', function() {
+					clearTimeout(resizeTimer);
+					resizeTimer = setTimeout(function() {
+						et_posts_carousel_init();
+					}, 100);
+				});
 			} /* end if ( $posts_carousel_module.length ) */
 
 			if ($filterable_portfolio.length) {

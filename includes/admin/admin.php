@@ -1202,14 +1202,14 @@ class Extra_Contact_Page_Template_Meta_Box extends Extra_Page_Template_Meta_Box 
 
 	function fields() {
 		$this->fields = array(
-			'_contact_form_title'           => '',
+			'_contact_form_title'           => array(),
 			'_contact_form_email'           => array(
 				'value_sanitize_function' => 'sanitize_email',
 			),
-			'_contact_form_map_zoom'        => '',
-			'_contact_form_map_address'     => '',
-			'_contact_form_map_address_lat' => '',
-			'_contact_form_map_address_lng' => '',
+			'_contact_form_map_zoom'        => array(),
+			'_contact_form_map_address'     => array(),
+			'_contact_form_map_address_lat' => array(),
+			'_contact_form_map_address_lng' => array(),
 		);
 	}
 

@@ -74,6 +74,8 @@ function et_setup_theme() {
 	// Load unminified script & styles based on selected theme options field
 	add_filter( 'et_load_unminified_scripts', 'et_extra_load_unminified_scripts' );
 	add_filter( 'et_load_unminified_styles', 'et_extra_load_unminified_styles' );
+
+	et_extra_version_rollback()->enable();
 }
 add_action( 'after_setup_theme', 'et_setup_theme' );
 
@@ -1538,3 +1540,16 @@ function et_load_product_tour_template( $template ) {
 	return $template;
 }
 add_filter( 'template_include', 'et_load_product_tour_template', 99 );
+
+if ( ! function_exists( 'et_extra_version_rollback' ) ) :
+	function et_extra_version_rollback() {
+		global $themename, $shortname;
+		static $instance = null;
+
+		if ( null === $instance ) {
+			$instance = new ET_Core_VersionRollback( $themename, $shortname, et_get_theme_version() );
+		}
+
+		return $instance;
+	}
+endif;

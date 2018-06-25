@@ -686,18 +686,30 @@ if ( !function_exists( 'et_dropdown_google_font_choices' ) ) {
 			$site_domain = get_locale();
 
 			$user_fonts = et_builder_get_custom_fonts();
-			
-			$google_fonts = et_builder_get_google_fonts();
 
+			$google_fonts = et_builder_get_fonts( array(
+				'prepend_standard_fonts' => false,
+			) );
+		
 			// combine google fonts with custom user fonts
- 			$google_fonts = array_merge( $user_fonts, $google_fonts );
-
+			$google_fonts = array_merge( $user_fonts, $google_fonts );
+		
 			$et_domain_fonts = array(
 				'ru_RU' => 'cyrillic',
 				'uk'    => 'cyrillic',
 				'bg_BG' => 'cyrillic',
 				'vi'    => 'vietnamese',
 				'el'    => 'greek',
+				'ar'    => 'arabic',
+				'he_IL' => 'hebrew',
+				'th'    => 'thai',
+				'si_lk' => 'sinhala',
+				'bn_bd' => 'bengali',
+				'ta_lk' => 'tamil',
+				'te'    => 'telegu',
+				'km'    => 'khmer',
+				'kn'    => 'kannada',
+				'ml_in' => 'malayalam',
 			);
 
 			$font_choices = array();

@@ -200,6 +200,17 @@ $options = array(
 		"desc"              => esc_html__( "Disable this option to remove Google Maps API script from your page. Note: Modules which relies to Google Maps API script such as Maps and Fullwidth Maps are still loaded, but will not work unless you manually add Google Maps API script.", $themename ),
 	),
 
+	array(
+		"name"              => esc_html__( "Use Google Fonts", $themename ),
+		"id"                => "et_use_google_fonts",
+		"main_setting_name" => "et_google_api_settings",
+		"sub_setting_name"  => 'use_google_fonts',
+		'is_global'         => true,
+		"type"              => "checkbox",
+		"std"               => "on",
+		"desc"              => esc_html__( "Disable this option to remove the Google Fonts from your Divi Builder Pages.", $themename ),
+	),
+
 	array( "type" => "clearfix"),
 
 	array(
@@ -1326,6 +1337,8 @@ $options = array(
 		'main_setting_name' => 'et_automatic_updates_options',
 		'sub_setting_name'  => 'api_key',
 	),
+
+	et_extra_version_rollback()->get_epanel_option(),
 
 	array(
 		"name" => "updates-1",
