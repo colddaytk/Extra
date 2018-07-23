@@ -1512,15 +1512,19 @@ new Extra_Project_Gallery_Meta_Box;
 
 class Extra_Page_Post_Settings_Meta_Box extends ET_Meta_Box {
 
-	public function __construct(){
+	public function __construct() {
+		$default_post_types = array(
+			'post',
+			'page',
+			EXTRA_LAYOUT_POST_TYPE,
+			EXTRA_PROJECT_POST_TYPE,
+			'product',
+		);
+		$all_post_types_with_builder = et_builder_get_builder_post_types();
+		$all_supported_post_types = array_merge( $default_post_types, $all_post_types_with_builder );
+
 		parent::__construct( 'extra-page-post-settings', esc_html__( 'Extra Settings', 'extra' ), array(
-			'post_type' => array(
-				'post',
-				'page',
-				EXTRA_LAYOUT_POST_TYPE,
-				EXTRA_PROJECT_POST_TYPE,
-				'product',
-			),
+			'post_type' => $all_supported_post_types,
 			'context'   => 'side',
 		) );
 	}

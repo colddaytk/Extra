@@ -10,6 +10,7 @@ function extra_customize_preview_enqueue_scripts() {
 	wp_enqueue_script( 'extra-customizer', get_template_directory_uri() . '/scripts/theme-customizer' . $suffix, array( 'customize-preview' ), $theme_version, true );
 
 	$home_layout_id = extra_get_home_layout_id();
+	$post_id        = et_core_page_resource_is_singular() ? et_core_page_resource_get_the_ID() : 0;
 
 	wp_localize_script( 'extra-customizer', 'EXTRA', array(
 		'ajaxurl'                => set_url_scheme( admin_url( 'admin-ajax.php' ) ),
@@ -17,7 +18,9 @@ function extra_customize_preview_enqueue_scripts() {
 		'settings'               => extra_get_customizer_value_bound_settings(),
 		'current_home_layout_id' => $home_layout_id,
 		'extra_customizer_nonce' => wp_create_nonce( 'extra_customizer_nonce' ),
-	));
+		'is_custom_post_type'    => et_builder_post_is_of_custom_post_type( $post_id ) ? 'yes' : 'no',
+		'css_selector_wrapper'   => '.et-db #et-boc',
+	) );
 }
 
 add_action( 'customize_preview_init', 'extra_customize_preview_enqueue_scripts' );
@@ -232,6 +235,7 @@ function et_pb_module_tabs_padding_css_value( $setting_name, $property, $unforma
 	$padding_tab_active_top    = $padding_tab_top_bottom + 1;
 	$padding_tab_active_bottom = $padding_tab_top_bottom - 1;
 	$padding_tab_content       = intval( $unformatted_value ) * 0.8;
+	$css                       = 'et_builder_maybe_wrap_css_selector';
 
 	// negative result will cause layout issue
 	if ( $padding_tab_active_bottom < 0 ) {
@@ -239,48 +243,59 @@ function et_pb_module_tabs_padding_css_value( $setting_name, $property, $unforma
 	}
 
 	return sprintf(
-		".et_pb_tabs_controls li{ padding: %spx %spx %spx; } .et_pb_tabs_controls li.et_pb_tab_active{ padding: %spx %spx; } .et_pb_all_tabs { padding: %spx %spx; }\n",
+		'%1$s{ padding: %2$spx %3$spx %4$spx; } %5$s{ padding: %6$spx %3$spx; } %7$s{ padding: %8$spx %3$spx; }\n',
+		et_intentionally_unescaped( $css( '.et_pb_tabs_controls li', false ), 'fixed_string' ),
 		esc_html( $padding_tab_active_top ),
-		esc_html( $unformatted_value ),
+		esc_html( $unformatted_value ), // #3
 		esc_html( $padding_tab_active_bottom ),
+		et_intentionally_unescaped( $css( '.et_pb_tabs_controls li.et_pb_tab_active', false ), 'fixed_string' ), // #5
 		esc_html( $padding_tab_top_bottom ),
-		esc_html( $unformatted_value ),
-		esc_html( $padding_tab_content ),
-		esc_html( $unformatted_value )
+		et_intentionally_unescaped( $css( '.et_pb_all_tabs', false ), 'fixed_string' ),
+		esc_html( $padding_tab_content ) // #8
 	);
 }
 
 function et_pb_module_cta_padding_css_value( $setting_name, $property, $unformatted_value ) {
 	$value = intval( $unformatted_value );
+	$css   = 'et_builder_maybe_wrap_css_selectors';
 
-	$formatted_value = sprintf( ".et_pb_promo { padding: %spx %spx !important; }", esc_html( $value ), esc_html( $value * ( 60 / 40 ) ) );
-	$formatted_value .= sprintf( ".et_pb_column_1_2 .et_pb_promo, .et_pb_column_1_3 .et_pb_promo, .et_pb_column_1_4 .et_pb_promo { padding: %spx; }", esc_html( $value ) );
+	$formatted_value = sprintf(
+		'%s { padding: %spx %spx !important; }',
+		et_intentionally_unescaped( $css( '.et_pb_promo', false ), 'fixed_string' ),
+		esc_html( $value ),
+		esc_html( $value * ( 60 / 40 ) )
+	);
+
+	$formatted_value .= sprintf(
+		' %s { padding: %spx; }',
+		et_intentionally_unescaped( $css( '.et_pb_column_1_2 .et_pb_promo, .et_pb_column_1_3 .et_pb_promo, .et_pb_column_1_4 .et_pb_promo', false ), 'fixed_string' ),
+		esc_html( $value )
+	);
+
 	return $formatted_value;
 }
 
 function et_pb_social_media_follow_font_size_css_value( $setting_name, $property, $unformatted_value ) {
 	$icon_margin    = intval( $unformatted_value ) * 0.57;
 	$icon_dimension = intval( $unformatted_value ) * 2;
+	$css            = 'et_builder_maybe_wrap_css_selector';
 
-	return sprintf(
-		'.et_pb_social_media_follow li a.icon {
-			margin-right: %2$spx;
-			width: %3$spx;
-			height: %3$spx;
+	return "
+		{$css( '.et_pb_social_media_follow li a.icon', false )} {
+			margin-right: {$icon_margin}px;
+			width: {$icon_dimension}px;
+			height: {$icon_dimension}px;
 		}
-		.et_pb_social_media_follow li a.icon::before {
-			width: %3$spx;
-			height: %3$spx;
-			font-size: %1$spx;
-			line-height: %3$spx;
+		{$css( '.et_pb_social_media_follow li a.icon::before', false )} {
+			width: {$icon_dimension}px;
+			height: {$icon_dimension}px;
+			font-size: {$unformatted_value}px;
+			line-height: {$icon_dimension}px;
 		}
-		.et_pb_social_media_follow li a.follow_button{
-			font-size: %1$spx;
-		}',
-		esc_html( $unformatted_value ),
-		esc_html( $icon_margin ),
-		esc_html( $icon_dimension )
-	);
+		{$css( '.et_pb_social_media_follow li a.follow_button', false )} {
+			font-size: {$unformatted_value}px;
+		}
+	";
 }
 
 add_action( 'wp_ajax_extra_customizer_value_formatted_property_selector', 'extra_customizer_value_formatted_property_selector_callback' );
@@ -2528,6 +2543,8 @@ function extra_customizer_register_module_image_settings() {
 add_filter( 'extra_customizer_register_module_image_settings', 'extra_customizer_register_module_image_settings', 1 );
 
 function extra_customizer_register_module_gallery_settings() {
+	$css = 'et_builder_maybe_wrap_css_selector';
+
 	return array(
 		'et_pb_gallery-zoom_icon_color'     => array(
 			'label'      => esc_html__( 'Zoom Icon Color', 'extra' ),
@@ -2537,7 +2554,7 @@ function extra_customizer_register_module_gallery_settings() {
 				'style'              => 'dynamic_selectors',
 				'property_selectors' => array(
 					'color' => array(
-						'.et_pb_gallery_image .et_overlay:before',
+						$css( '.et_pb_gallery_image .et_overlay:before', false ),
 					),
 				),
 			),
@@ -2550,7 +2567,7 @@ function extra_customizer_register_module_gallery_settings() {
 				'style'              => 'dynamic_selectors',
 				'property_selectors' => array(
 					'background-color' => array(
-						'.et_pb_gallery_image .et_overlay',
+						$css( '.et_pb_gallery_image .et_overlay', false ),
 					),
 				),
 			),
@@ -2571,7 +2588,7 @@ function extra_customizer_register_module_gallery_settings() {
 						'property'  => 'font-size',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_gallery_grid .et_pb_gallery_item .et_pb_gallery_title',
+							$css( '.et_pb_gallery_grid .et_pb_gallery_item .et_pb_gallery_title', false ),
 						),
 					),
 				),
@@ -2587,7 +2604,7 @@ function extra_customizer_register_module_gallery_settings() {
 				'use_only_formatted_value' => true,
 				'property_selectors'       => array(
 					'font-style' => array(
-						'.et_pb_gallery_grid .et_pb_gallery_item .et_pb_gallery_title',
+						$css( '.et_pb_gallery_grid .et_pb_gallery_item .et_pb_gallery_title', false ),
 					),
 				),
 			),
@@ -2608,7 +2625,7 @@ function extra_customizer_register_module_gallery_settings() {
 						'property'  => 'font-size',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_gallery .et_pb_gallery_item .et_pb_gallery_caption',
+							$css( '.et_pb_gallery .et_pb_gallery_item .et_pb_gallery_caption', false ),
 						),
 					),
 				),
@@ -2624,7 +2641,7 @@ function extra_customizer_register_module_gallery_settings() {
 				'use_only_formatted_value' => true,
 				'property_selectors'       => array(
 					'font-style' => array(
-						'.et_pb_gallery .et_pb_gallery_item .et_pb_gallery_caption',
+						$css( '.et_pb_gallery .et_pb_gallery_item .et_pb_gallery_caption', false ),
 					),
 				),
 			),
@@ -2635,6 +2652,8 @@ function extra_customizer_register_module_gallery_settings() {
 add_filter( 'extra_customizer_register_module_gallery_settings', 'extra_customizer_register_module_gallery_settings', 1 );
 
 function extra_customizer_register_module_blurb_settings() {
+	$css = 'et_builder_maybe_wrap_css_selector';
+
 	return array(
 		'et_pb_blurb-header_font_size' => array(
 			'label'       => esc_html__( 'Header Font Size', 'extra' ),
@@ -2652,7 +2671,7 @@ function extra_customizer_register_module_blurb_settings() {
 						'property'  => 'font-size',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_blurb h4',
+							$css( '.et_pb_blurb h4', false ),
 						),
 					),
 				),
@@ -2664,6 +2683,8 @@ function extra_customizer_register_module_blurb_settings() {
 add_filter( 'extra_customizer_register_module_blurb_settings', 'extra_customizer_register_module_blurb_settings', 1 );
 
 function extra_customizer_register_module_tabs_settings() {
+	$css = 'et_builder_maybe_wrap_css_selector';
+
 	return array(
 		'et_pb_tabs-title_font_size'  => array(
 			'label'       => esc_html__( 'Title Font Size', 'extra' ),
@@ -2681,7 +2702,7 @@ function extra_customizer_register_module_tabs_settings() {
 						'property'  => 'font-size',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_tabs_controls li',
+							$css( '.et_pb_tabs_controls li', false ),
 						),
 					),
 				),
@@ -2697,7 +2718,7 @@ function extra_customizer_register_module_tabs_settings() {
 				'use_only_formatted_value' => true,
 				'property_selectors'       => array(
 					'font-style' => array(
-						'.et_pb_tabs_controls li',
+						$css( '.et_pb_tabs_controls li', false ),
 					),
 				),
 			),
@@ -2726,6 +2747,8 @@ function extra_customizer_register_module_tabs_settings() {
 add_filter( 'extra_customizer_register_module_tabs_settings', 'extra_customizer_register_module_tabs_settings', 1 );
 
 function extra_customizer_register_module_slider_settings() {
+	$css = 'et_builder_maybe_wrap_css_selector';
+
 	return array(
 		'et_pb_slider-padding'           => array(
 			'label'       => esc_html__( 'Top & Bottom Padding', 'extra' ),
@@ -2744,7 +2767,7 @@ function extra_customizer_register_module_slider_settings() {
 						'property'  => 'padding-top-bottom',
 						'format'    => 'padding-top: %value%%; padding-bottom: %value%%;',
 						'selectors' => array(
-							'.et_pb_slider_fullwidth_off .et_pb_slide_description',
+							$css( '.et_pb_slider_fullwidth_off .et_pb_slide_description', false ),
 						),
 					),
 				),
@@ -2766,7 +2789,7 @@ function extra_customizer_register_module_slider_settings() {
 						'property'  => 'font-size',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_slider_fullwidth_off .et_pb_slide_description h2',
+							$css( '.et_pb_slider_fullwidth_off .et_pb_slide_description h2', false ),
 						),
 					),
 				),
@@ -2782,7 +2805,7 @@ function extra_customizer_register_module_slider_settings() {
 				'use_only_formatted_value' => true,
 				'property_selectors'       => array(
 					'font-style' => array(
-						'.et_pb_slider_fullwidth_off .et_pb_slide_description h2',
+						$css( '.et_pb_slider_fullwidth_off .et_pb_slide_description h2', false ),
 					),
 				),
 			),
@@ -2803,7 +2826,7 @@ function extra_customizer_register_module_slider_settings() {
 						'property'  => 'font-size',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_slider_fullwidth_off .et_pb_slide_content',
+							$css( '.et_pb_slider_fullwidth_off .et_pb_slide_content', false ),
 						),
 					),
 				),
@@ -2819,7 +2842,7 @@ function extra_customizer_register_module_slider_settings() {
 				'use_only_formatted_value' => true,
 				'property_selectors'       => array(
 					'font-style' => array(
-						'.et_pb_slider_fullwidth_off .et_pb_slide_content',
+						$css( '.et_pb_slider_fullwidth_off .et_pb_slide_content', false ),
 					),
 				),
 			),
@@ -2830,6 +2853,7 @@ function extra_customizer_register_module_slider_settings() {
 add_filter( 'extra_customizer_register_module_slider_settings', 'extra_customizer_register_module_slider_settings', 1 );
 
 function extra_customizer_register_module_testimonial_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_style_setting( array(
@@ -2837,14 +2861,14 @@ function extra_customizer_register_module_testimonial_settings() {
 		'label'     => esc_html__( 'Name Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_testimonial_author',
+			$css( '.et_pb_testimonial_author', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_testimonial-author_details_font_style',
 		'label'     => esc_html__( 'Details Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'p.et_pb_testimonial_meta',
+			$css( 'p.et_pb_testimonial_meta', false ),
 		),
 	) ) + array(
 		'et_pb_testimonial-portrait_border_radius' => array(
@@ -2863,8 +2887,8 @@ function extra_customizer_register_module_testimonial_settings() {
 						'property'  => 'border-radius',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_testimonial_portrait',
-							'.et_pb_testimonial_portrait:before',
+							$css( '.et_pb_testimonial_portrait', false ),
+							$css( '.et_pb_testimonial_portrait:before', false ),
 						),
 					),
 				),
@@ -2886,7 +2910,7 @@ function extra_customizer_register_module_testimonial_settings() {
 						'property'  => 'width',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_testimonial_portrait',
+							$css( '.et_pb_testimonial_portrait', false ),
 						),
 					),
 				),
@@ -2908,7 +2932,7 @@ function extra_customizer_register_module_testimonial_settings() {
 						'property'  => 'width',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_testimonial_portrait',
+							$css( '.et_pb_testimonial_portrait', false ),
 						),
 					),
 				),
@@ -2922,6 +2946,7 @@ function extra_customizer_register_module_testimonial_settings() {
 add_filter( 'extra_customizer_register_module_testimonial_settings', 'extra_customizer_register_module_testimonial_settings', 1 );
 
 function extra_customizer_register_module_pricing_table_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -2931,14 +2956,14 @@ function extra_customizer_register_module_pricing_table_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_pricing_heading h2',
+			$css( '.et_pb_pricing_heading h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_pricing_tables-header_font_style',
 		'label'     => esc_html__( 'Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_pricing_heading h2',
+			$css( '.et_pb_pricing_heading h2', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_pricing_tables-subheader_font_size',
@@ -2947,14 +2972,14 @@ function extra_customizer_register_module_pricing_table_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_best_value',
+			$css( '.et_pb_best_value', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_pricing_tables-subheader_font_style',
 		'label'     => esc_html__( 'Subheader Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_best_value',
+			$css( '.et_pb_best_value', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_pricing_tables-price_font_size',
@@ -2963,14 +2988,14 @@ function extra_customizer_register_module_pricing_table_settings() {
 		'min'       => 10,
 		'max'       => 100,
 		'selectors' => array(
-			'.et_pb_sum',
+			$css( '.et_pb_sum', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_pricing_tables-price_font_style',
 		'label'     => esc_html__( 'Price Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_sum',
+			$css( '.et_pb_sum', false ),
 		),
 	) );
 
@@ -2980,6 +3005,7 @@ function extra_customizer_register_module_pricing_table_settings() {
 add_filter( 'extra_customizer_register_module_pricing_table_settings', 'extra_customizer_register_module_pricing_table_settings', 1 );
 
 function extra_customizer_register_module_call_to_action_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -2989,14 +3015,14 @@ function extra_customizer_register_module_call_to_action_settings() {
 		'min'       => 10,
 		'max'       => 100,
 		'selectors' => array(
-			'.et_pb_promo h2',
+			$css( '.et_pb_promo h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_cta-header_font_style',
 		'label'     => esc_html__( 'Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_promo h2',
+			$css( '.et_pb_promo h2', false ),
 		),
 	) ) + array(
 		'et_pb_cta-custom_padding' => array(
@@ -3025,6 +3051,7 @@ function extra_customizer_register_module_call_to_action_settings() {
 add_filter( 'extra_customizer_register_module_call_to_action_settings', 'extra_customizer_register_module_call_to_action_settings', 1 );
 
 function extra_customizer_register_module_audio_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3034,14 +3061,14 @@ function extra_customizer_register_module_audio_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_audio_module_content h2',
+			$css( '.et_pb_audio_module_content h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_audio-title_font_style',
 		'label'     => esc_html__( 'Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_audio_module_content h2',
+			$css( '.et_pb_audio_module_content h2', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_audio-caption_font_size',
@@ -3050,14 +3077,14 @@ function extra_customizer_register_module_audio_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_audio_module p',
+			$css( '.et_pb_audio_module p', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_audio-caption_font_style',
 		'label'     => esc_html__( 'Subheader Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_audio_module p',
+			$css( '.et_pb_audio_module p', false ),
 		),
 	) );
 
@@ -3067,9 +3094,8 @@ function extra_customizer_register_module_audio_settings() {
 add_filter( 'extra_customizer_register_module_audio_settings', 'extra_customizer_register_module_audio_settings', 1 );
 
 function extra_customizer_register_module_subscribe_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
-
-	return $settings;
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_signup-header_font_size',
@@ -3078,14 +3104,14 @@ function extra_customizer_register_module_subscribe_settings() {
 		'min'       => 10,
 		'max'       => 72,
 		'selectors' => array(
-			'.et_pb_subscribe h2',
+			$css( '.et_pb_subscribe h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_signup-header_font_style',
 		'label'     => esc_html__( 'Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_subscribe h2',
+			$css( '.et_pb_subscribe h2', false ),
 		),
 	) ) + array(
 		'et_pb_signup-padding' => array(
@@ -3104,7 +3130,7 @@ function extra_customizer_register_module_subscribe_settings() {
 						'property'  => 'padding',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_subscribe',
+							$css( '.et_pb_subscribe', false ),
 						),
 					),
 				),
@@ -3118,6 +3144,7 @@ function extra_customizer_register_module_subscribe_settings() {
 add_filter( 'extra_customizer_register_module_subscribe_settings', 'extra_customizer_register_module_subscribe_settings', 1 );
 
 function extra_customizer_register_module_login_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3127,14 +3154,14 @@ function extra_customizer_register_module_login_settings() {
 		'min'       => 10,
 		'max'       => 72,
 		'selectors' => array(
-			'.et_pb_login h2',
+			$css( '.et_pb_login h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_login-header_font_style',
 		'label'     => esc_html__( 'Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_login h2',
+			$css( '.et_pb_login h2', false ),
 		),
 	) ) + array(
 		'et_pb_login-padding' => array(
@@ -3153,7 +3180,7 @@ function extra_customizer_register_module_login_settings() {
 						'property'  => 'padding',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_login',
+							$css( '.et_pb_login', false ),
 						),
 					),
 				),
@@ -3167,6 +3194,7 @@ function extra_customizer_register_module_login_settings() {
 add_filter( 'extra_customizer_register_module_login_settings', 'extra_customizer_register_module_login_settings', 1 );
 
 function extra_customizer_register_module_portfolio_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + array(
@@ -3178,9 +3206,9 @@ function extra_customizer_register_module_portfolio_settings() {
 				'style'              => 'dynamic_selectors',
 				'property_selectors' => array(
 					'color' => array(
-						'.et_pb_portfolio .et_overlay:before',
-						'.et_pb_fullwidth_portfolio .et_overlay:before',
-						'.et_pb_portfolio_grid .et_overlay:before',
+						$css( '.et_pb_portfolio .et_overlay:before', false ),
+						$css( '.et_pb_fullwidth_portfolio .et_overlay:before', false ),
+						$css( '.et_pb_portfolio_grid .et_overlay:before', false ),
 					),
 				),
 			),
@@ -3193,9 +3221,9 @@ function extra_customizer_register_module_portfolio_settings() {
 				'style'              => 'dynamic_selectors',
 				'property_selectors' => array(
 					'background-color' => array(
-						'.et_pb_portfolio .et_overlay',
-						'.et_pb_fullwidth_portfolio .et_overlay',
-						'.et_pb_portfolio_grid .et_overlay',
+						$css( '.et_pb_portfolio .et_overlay', false ),
+						$css( '.et_pb_fullwidth_portfolio .et_overlay', false ),
+						$css( '.et_pb_portfolio_grid .et_overlay', false ),
 					),
 				),
 			),
@@ -3207,18 +3235,18 @@ function extra_customizer_register_module_portfolio_settings() {
 		'min'       => 10,
 		'max'       => 72,
 		'selectors' => array(
-			'.et_pb_portfolio .et_pb_portfolio_item h2',
-			'.et_pb_fullwidth_portfolio .et_pb_portfolio_item h3',
-			'.et_pb_portfolio_grid .et_pb_portfolio_item h2',
+			$css( '.et_pb_portfolio .et_pb_portfolio_item h2', false ),
+			$css( '.et_pb_fullwidth_portfolio .et_pb_portfolio_item h3', false ),
+			$css( '.et_pb_portfolio_grid .et_pb_portfolio_item h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_portfolio-title_font_style',
 		'label'     => esc_html__( 'Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_portfolio .et_pb_portfolio_item h2',
-			'.et_pb_fullwidth_portfolio .et_pb_portfolio_item h3',
-			'.et_pb_portfolio_grid .et_pb_portfolio_item h2',
+			$css( '.et_pb_portfolio .et_pb_portfolio_item h2', false ),
+			$css( '.et_pb_fullwidth_portfolio .et_pb_portfolio_item h3', false ),
+			$css( '.et_pb_portfolio_grid .et_pb_portfolio_item h2', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_portfolio-caption_font_size',
@@ -3227,18 +3255,18 @@ function extra_customizer_register_module_portfolio_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_portfolio .et_pb_portfolio_item .post-meta',
-			'.et_pb_fullwidth_portfolio .et_pb_portfolio_item .post-meta',
-			'.et_pb_portfolio_grid .et_pb_portfolio_item .post-meta',
+			$css( '.et_pb_portfolio .et_pb_portfolio_item .post-meta', false ),
+			$css( '.et_pb_fullwidth_portfolio .et_pb_portfolio_item .post-meta', false ),
+			$css( '.et_pb_portfolio_grid .et_pb_portfolio_item .post-meta', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_portfolio-caption_font_style',
 		'label'     => esc_html__( 'Caption Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_portfolio .et_pb_portfolio_item .post-meta',
-			'.et_pb_fullwidth_portfolio .et_pb_portfolio_item .post-meta',
-			'.et_pb_portfolio_grid .et_pb_portfolio_item .post-meta',
+			$css( '.et_pb_portfolio .et_pb_portfolio_item .post-meta', false ),
+			$css( '.et_pb_fullwidth_portfolio .et_pb_portfolio_item .post-meta', false ),
+			$css( '.et_pb_portfolio_grid .et_pb_portfolio_item .post-meta', false ),
 		),
 	) );
 
@@ -3248,6 +3276,7 @@ function extra_customizer_register_module_portfolio_settings() {
 add_filter( 'extra_customizer_register_module_portfolio_settings', 'extra_customizer_register_module_portfolio_settings', 1 );
 
 function extra_customizer_register_module_filterable_portfolio_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + array(
@@ -3259,7 +3288,7 @@ function extra_customizer_register_module_filterable_portfolio_settings() {
 				'style'              => 'dynamic_selectors',
 				'property_selectors' => array(
 					'color' => array(
-						'.et_pb_filterable_portfolio .et_overlay:before',
+						$css( '.et_pb_filterable_portfolio .et_overlay:before', false ),
 					),
 				),
 			),
@@ -3272,7 +3301,7 @@ function extra_customizer_register_module_filterable_portfolio_settings() {
 				'style'              => 'dynamic_selectors',
 				'property_selectors' => array(
 					'background-color' => array(
-						'.et_pb_filterable_portfolio .et_overlay',
+						$css( '.et_pb_filterable_portfolio .et_overlay', false ),
 					),
 				),
 			),
@@ -3284,14 +3313,14 @@ function extra_customizer_register_module_filterable_portfolio_settings() {
 		'min'       => 10,
 		'max'       => 72,
 		'selectors' => array(
-			'.et_pb_filterable_portfolio .et_pb_portfolio_item h2',
+			$css( '.et_pb_filterable_portfolio .et_pb_portfolio_item h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_filterable_portfolio-title_font_style',
 		'label'     => esc_html__( 'Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_filterable_portfolio .et_pb_portfolio_item h2',
+			$css( '.et_pb_filterable_portfolio .et_pb_portfolio_item h2', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_filterable_portfolio-caption_font_size',
@@ -3300,14 +3329,14 @@ function extra_customizer_register_module_filterable_portfolio_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_filterable_portfolio .et_pb_portfolio_item .post-meta',
+			$css( '.et_pb_filterable_portfolio .et_pb_portfolio_item .post-meta', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_filterable_portfolio-caption_font_style',
 		'label'     => esc_html__( 'Caption Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_filterable_portfolio .et_pb_portfolio_item .post-meta',
+			$css( '.et_pb_filterable_portfolio .et_pb_portfolio_item .post-meta', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_filterable_portfolio-filter_font_size',
@@ -3316,14 +3345,14 @@ function extra_customizer_register_module_filterable_portfolio_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_filterable_portfolio .et_pb_portfolio_item .post-meta',
+			$css( '.et_pb_filterable_portfolio .et_pb_portfolio_item .post-meta', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_filterable_portfolio-filter_font_style',
 		'label'     => esc_html__( 'Filter Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_filterable_portfolio .et_pb_portfolio_item .post-meta',
+			$css( '.et_pb_filterable_portfolio .et_pb_portfolio_item .post-meta', false ),
 		),
 	) );
 
@@ -3333,6 +3362,7 @@ function extra_customizer_register_module_filterable_portfolio_settings() {
 add_filter( 'extra_customizer_register_module_filterable_portfolio_settings', 'extra_customizer_register_module_filterable_portfolio_settings', 1 );
 
 function extra_customizer_register_module_bar_counter_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3342,14 +3372,14 @@ function extra_customizer_register_module_bar_counter_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_counters .et_pb_counter_title',
+			$css( '.et_pb_counters .et_pb_counter_title', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_counters-title_font_style',
 		'label'     => esc_html__( 'Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_counters .et_pb_counter_title',
+			$css( '.et_pb_counters .et_pb_counter_title', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_counters-percent_font_size',
@@ -3358,14 +3388,14 @@ function extra_customizer_register_module_bar_counter_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_counters .et_pb_counter_amount',
+			$css( '.et_pb_counters .et_pb_counter_amount', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_counters-percent_font_style',
 		'label'     => esc_html__( 'Percent Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_counters .et_pb_counter_amount',
+			$css( '.et_pb_counters .et_pb_counter_amount', false ),
 		),
 	) ) + array(
 		'et_pb_counters-padding'       => array(
@@ -3384,7 +3414,7 @@ function extra_customizer_register_module_bar_counter_settings() {
 						'property'  => 'padding',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_counter_amount',
+							$css( '.et_pb_counter_amount', false ),
 						),
 					),
 				),
@@ -3406,8 +3436,8 @@ function extra_customizer_register_module_bar_counter_settings() {
 						'property'  => 'border-radius',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_counters .et_pb_counter_amount',
-							'.et_pb_counters .et_pb_counter_container',
+							$css( '.et_pb_counters .et_pb_counter_amount', false ),
+							$css( '.et_pb_counters .et_pb_counter_container', false ),
 						),
 					),
 				),
@@ -3421,6 +3451,7 @@ function extra_customizer_register_module_bar_counter_settings() {
 add_filter( 'extra_customizer_register_module_bar_counter_settings', 'extra_customizer_register_module_bar_counter_settings', 1 );
 
 function extra_customizer_register_module_circle_counter_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3430,14 +3461,14 @@ function extra_customizer_register_module_circle_counter_settings() {
 		'min'       => 10,
 		'max'       => 72,
 		'selectors' => array(
-			'.et_pb_circle_counter .percent p',
+			$css( '.et_pb_circle_counter .percent p', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_circle_counter-number_font_style',
 		'label'     => esc_html__( 'Number Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_circle_counter .percent p',
+			$css( '.et_pb_circle_counter .percent p', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_circle_counter-title_font_size',
@@ -3446,14 +3477,14 @@ function extra_customizer_register_module_circle_counter_settings() {
 		'min'       => 10,
 		'max'       => 72,
 		'selectors' => array(
-			'.et_pb_circle_counter h3',
+			$css( '.et_pb_circle_counter h3', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_circle_counter-title_font_style',
 		'label'     => esc_html__( 'Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_circle_counter h3',
+			$css( '.et_pb_circle_counter h3', false ),
 		),
 	) );
 
@@ -3463,6 +3494,7 @@ function extra_customizer_register_module_circle_counter_settings() {
 add_filter( 'extra_customizer_register_module_circle_counter_settings', 'extra_customizer_register_module_circle_counter_settings', 1 );
 
 function extra_customizer_register_module_number_counter_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3472,14 +3504,14 @@ function extra_customizer_register_module_number_counter_settings() {
 		'min'       => 10,
 		'max'       => 72,
 		'selectors' => array(
-			'.et_pb_number_counter .percent p',
+			$css( '.et_pb_number_counter .percent p', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_number_counter-number_font_style',
 		'label'     => esc_html__( 'Number Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_number_counter .percent p',
+			$css( '.et_pb_number_counter .percent p', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_number_counter-title_font_size',
@@ -3488,14 +3520,14 @@ function extra_customizer_register_module_number_counter_settings() {
 		'min'       => 10,
 		'max'       => 72,
 		'selectors' => array(
-			'.et_pb_number_counter h3',
+			$css( '.et_pb_number_counter h3', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_number_counter-title_font_style',
 		'label'     => esc_html__( 'Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_number_counter h3',
+			$css( '.et_pb_number_counter h3', false ),
 		),
 	) );
 
@@ -3505,6 +3537,7 @@ function extra_customizer_register_module_number_counter_settings() {
 add_filter( 'extra_customizer_register_module_number_counter_settings', 'extra_customizer_register_module_number_counter_settings', 1 );
 
 function extra_customizer_register_module_accordion_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3514,21 +3547,21 @@ function extra_customizer_register_module_accordion_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_accordion .et_pb_toggle_title',
+			$css( '.et_pb_accordion .et_pb_toggle_title', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_accordion-toggle_font_style',
 		'label'     => esc_html__( 'Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_accordion .et_pb_toggle_title',
+			$css( '.et_pb_accordion .et_pb_toggle_title', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_accordion-inactive_toggle_font_style',
 		'label'     => esc_html__( 'Closed Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_accordion .et_pb_toggle.et_pb_toggle_close .et_pb_toggle_title',
+			$css( '.et_pb_accordion .et_pb_toggle.et_pb_toggle_close .et_pb_toggle_title', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_accordion-toggle_icon_size',
@@ -3537,7 +3570,7 @@ function extra_customizer_register_module_accordion_settings() {
 		'min'       => 16,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_accordion .et_pb_toggle_title:before',
+			$css( '.et_pb_accordion .et_pb_toggle_title:before', false ),
 		),
 	) ) + array(
 		'et_pb_accordion-custom_padding' => array(
@@ -3556,8 +3589,8 @@ function extra_customizer_register_module_accordion_settings() {
 						'property'  => 'padding',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_accordion .et_pb_toggle_open',
-							'.et_pb_accordion .et_pb_toggle_close',
+							$css( '.et_pb_accordion .et_pb_toggle_open', false ),
+							$css( '.et_pb_accordion .et_pb_toggle_close', false ),
 						),
 					),
 				),
@@ -3571,6 +3604,7 @@ function extra_customizer_register_module_accordion_settings() {
 add_filter( 'extra_customizer_register_module_accordion_settings', 'extra_customizer_register_module_accordion_settings', 1 );
 
 function extra_customizer_register_module_toggle_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3580,21 +3614,21 @@ function extra_customizer_register_module_toggle_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_toggle.et_pb_toggle_item h5',
+			$css( '.et_pb_toggle.et_pb_toggle_item h5', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_toggle-title_font_style',
 		'label'     => esc_html__( 'Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_toggle.et_pb_toggle_item h5',
+			$css( '.et_pb_toggle.et_pb_toggle_item h5', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_toggle-inactive_title_font_style',
 		'label'     => esc_html__( 'Closed Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_toggle.et_pb_toggle_item.et_pb_toggle_close h5',
+			$css( '.et_pb_toggle.et_pb_toggle_item.et_pb_toggle_close h5', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_toggle-toggle_icon_font_size',
@@ -3603,7 +3637,7 @@ function extra_customizer_register_module_toggle_settings() {
 		'min'       => 16,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_toggle.et_pb_toggle_item .et_pb_toggle_title:before',
+			$css( '.et_pb_toggle.et_pb_toggle_item .et_pb_toggle_title:before', false ),
 		),
 	) ) + array(
 		'et_pb_toggle-custom_padding' => array(
@@ -3622,7 +3656,7 @@ function extra_customizer_register_module_toggle_settings() {
 						'property'  => 'padding',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_toggle.et_pb_toggle_item',
+							$css( '.et_pb_toggle.et_pb_toggle_item', false ),
 						),
 					),
 				),
@@ -3636,6 +3670,7 @@ function extra_customizer_register_module_toggle_settings() {
 add_filter( 'extra_customizer_register_module_toggle_settings', 'extra_customizer_register_module_toggle_settings', 1 );
 
 function extra_customizer_register_module_contact_form_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3645,14 +3680,14 @@ function extra_customizer_register_module_contact_form_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_contact_form_container .et_pb_contact_main_title',
+			$css( '.et_pb_contact_form_container .et_pb_contact_main_title', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_contact_form-title_font_style',
 		'label'     => esc_html__( 'Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_contact_form_container .et_pb_contact_main_title',
+			$css( '.et_pb_contact_form_container .et_pb_contact_main_title', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_contact_form-form_field_font_size',
@@ -3661,16 +3696,16 @@ function extra_customizer_register_module_contact_form_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_contact_form_container .et_pb_contact p input',
-			'.et_pb_contact_form_container .et_pb_contact p textarea',
+			$css( '.et_pb_contact_form_container .et_pb_contact p input', false ),
+			$css( '.et_pb_contact_form_container .et_pb_contact p textarea', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_contact_form-form_field_font_style',
 		'label'     => esc_html__( 'Input Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_contact_form_container .et_pb_contact p input',
-			'.et_pb_contact_form_container .et_pb_contact p textarea',
+			$css( '.et_pb_contact_form_container .et_pb_contact p input', false ),
+			$css( '.et_pb_contact_form_container .et_pb_contact p textarea', false ),
 		),
 	) ) + array(
 		'et_pb_contact_form-padding' => array(
@@ -3689,8 +3724,8 @@ function extra_customizer_register_module_contact_form_settings() {
 						'property'  => 'padding',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_contact p input',
-							'.et_pb_contact p textarea',
+							$css( '.et_pb_contact p input', false ),
+							$css( '.et_pb_contact p textarea', false ),
 						),
 					),
 				),
@@ -3703,14 +3738,14 @@ function extra_customizer_register_module_contact_form_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_contact_captcha_question',
+			$css( '.et_pb_contact_captcha_question', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_contact_form-captcha_font_style',
 		'label'     => esc_html__( 'Captcha Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_contact_captcha_question',
+			$css( '.et_pb_contact_captcha_question', false ),
 		),
 	) );
 
@@ -3720,6 +3755,7 @@ function extra_customizer_register_module_contact_form_settings() {
 add_filter( 'extra_customizer_register_module_contact_form_settings', 'extra_customizer_register_module_contact_form_settings', 1 );
 
 function extra_customizer_register_module_sidebar_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3729,14 +3765,14 @@ function extra_customizer_register_module_sidebar_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_widget_area h4',
+			$css( '.et_pb_widget_area h4', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_sidebar-header_font_style',
 		'label'     => esc_html__( 'Widget Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_widget_area h4',
+			$css( '.et_pb_widget_area h4', false ),
 		),
 	) ) + array(
 		'et_pb_sidebar-remove_border' => array(
@@ -3756,6 +3792,7 @@ function extra_customizer_register_module_sidebar_settings() {
 add_filter( 'extra_customizer_register_module_sidebar_settings', 'extra_customizer_register_module_sidebar_settings', 1 );
 
 function extra_customizer_register_module_divider_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array(
 		'et_pb_divider-show_divider'     => array(
 			'label' => esc_html__( 'Show Divider', 'extra' ),
@@ -3771,7 +3808,7 @@ function extra_customizer_register_module_divider_settings() {
 				'style'              => 'dynamic_selectors',
 				'property_selectors' => array(
 					'border-top-style' => array(
-						'.et_pb_space:before',
+						$css( '.et_pb_space:before', false ),
 					),
 				),
 			),
@@ -3792,7 +3829,7 @@ function extra_customizer_register_module_divider_settings() {
 						'property'  => 'border-top-width',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_space:before',
+							$css( '.et_pb_space:before', false ),
 						),
 					),
 				),
@@ -3814,7 +3851,7 @@ function extra_customizer_register_module_divider_settings() {
 						'property'  => 'height',
 						'format'    => '%value%px',
 						'selectors' => array(
-							'.et_pb_space',
+							$css( '.et_pb_space', false ),
 						),
 					),
 				),
@@ -3827,7 +3864,7 @@ function extra_customizer_register_module_divider_settings() {
 			'choices'           => et_extra_divider_position_choices(),
 			'value_bind'        => array(
 				'style'    => 'class_toggle',
-				'selector' => '.customized_et_pb_divider_position',
+				'selector' => $css( '.customized_et_pb_divider_position', false ),
 				'class'    => '_value_bind_to_value',
 				'format'   => 'et_pb_divider_position_%value%',
 			),
@@ -3840,6 +3877,7 @@ function extra_customizer_register_module_divider_settings() {
 add_filter( 'extra_customizer_register_module_divider_settings', 'extra_customizer_register_module_divider_settings', 1 );
 
 function extra_customizer_register_module_person_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3849,14 +3887,14 @@ function extra_customizer_register_module_person_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_team_member h4',
+			$css( '.et_pb_team_member h4', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_team_member-header_font_style',
 		'label'     => esc_html__( 'Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_team_member h4',
+			$css( '.et_pb_team_member h4', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_team_member-subheader_font_size',
@@ -3865,14 +3903,14 @@ function extra_customizer_register_module_person_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_team_member .et_pb_member_position',
+			$css( '.et_pb_team_member .et_pb_member_position', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_team_member-subheader_font_style',
 		'label'     => esc_html__( 'Subheader Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_team_member .et_pb_member_position',
+			$css( '.et_pb_team_member .et_pb_member_position', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_team_member-social_network_icon_size',
@@ -3881,7 +3919,7 @@ function extra_customizer_register_module_person_settings() {
 		'min'       => 16,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_member_social_links a',
+			$css( '.et_pb_member_social_links a', false ),
 		),
 	) );
 
@@ -3891,6 +3929,7 @@ function extra_customizer_register_module_person_settings() {
 add_filter( 'extra_customizer_register_module_person_settings', 'extra_customizer_register_module_person_settings', 1 );
 
 function extra_customizer_register_module_blog_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3900,14 +3939,14 @@ function extra_customizer_register_module_blog_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_posts .et_pb_post h2',
+			$css( '.et_pb_posts .et_pb_post h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_blog-header_font_style',
 		'label'     => esc_html__( 'Post Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_posts .et_pb_post h2',
+			$css( '.et_pb_posts .et_pb_post h2', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_blog-meta_font_size',
@@ -3916,14 +3955,14 @@ function extra_customizer_register_module_blog_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_posts .et_pb_post .post-meta',
+			$css( '.et_pb_posts .et_pb_post .post-meta', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_blog-meta_font_style',
 		'label'     => esc_html__( 'Meta Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_posts .et_pb_post .post-meta',
+			$css( '.et_pb_posts .et_pb_post .post-meta', false ),
 		),
 	) );
 
@@ -3933,6 +3972,7 @@ function extra_customizer_register_module_blog_settings() {
 add_filter( 'extra_customizer_register_module_blog_settings', 'extra_customizer_register_module_blog_settings', 1 );
 
 function extra_customizer_register_module_masonry_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3942,14 +3982,14 @@ function extra_customizer_register_module_masonry_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_blog_grid .et_pb_post h2',
+			$css( '.et_pb_blog_grid .et_pb_post h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_blog_masonry-header_font_style',
 		'label'     => esc_html__( 'Title Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_blog_grid .et_pb_post h2',
+			$css( '.et_pb_blog_grid .et_pb_post h2', false ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_blog_masonry-meta_font_size',
@@ -3965,7 +4005,7 @@ function extra_customizer_register_module_masonry_settings() {
 		'label'     => esc_html__( 'Meta Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_blog_grid .et_pb_post .post-meta',
+			$css( '.et_pb_blog_grid .et_pb_post .post-meta', false ),
 		),
 	) );
 
@@ -3975,6 +4015,7 @@ function extra_customizer_register_module_masonry_settings() {
 add_filter( 'extra_customizer_register_module_masonry_settings', 'extra_customizer_register_module_masonry_settings', 1 );
 
 function extra_customizer_register_module_shop_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -3984,16 +4025,16 @@ function extra_customizer_register_module_shop_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.woocommerce ul.products li.product .product-wrapper h3',
-			'.woocommerce-page ul.products li.product h3',
+			$css( '.woocommerce', 'ul.products li.product .product-wrapper h3' ),
+			$css( '.woocommerce-page', 'ul.products li.product h3' ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_shop-title_font_style',
 		'label'     => esc_html__( 'Product Name Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.woocommerce ul.products li.product .product-wrapper h3',
-			'.woocommerce-page ul.products li.product h3',
+			$css( '.woocommerce', 'ul.products li.product .product-wrapper h3' ),
+			$css( '.woocommerce-page', 'ul.products li.product h3' ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_shop-sale_badge_font_size',
@@ -4002,16 +4043,16 @@ function extra_customizer_register_module_shop_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.woocommerce span.onsale',
-			'.woocommerce-page span.onsale',
+			$css( '.woocommerce', 'span.onsale' ),
+			$css( '.woocommerce-page', 'span.onsale' ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_shop-sale_badge_font_style',
 		'label'     => esc_html__( 'Sale Badge Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.woocommerce span.onsale',
-			'.woocommerce-page span.onsale',
+			$css( '.woocommerce', 'span.onsale' ),
+			$css( '.woocommerce-page', 'span.onsale' ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_shop-price_font_size',
@@ -4020,16 +4061,16 @@ function extra_customizer_register_module_shop_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.woocommerce ul.products li.product .price .amount',
-			'.woocommerce-page ul.products li.product .price .amount',
+			$css( '.woocommerce', 'ul.products li.product .price .amount' ),
+			$css( '.woocommerce-page', 'ul.products li.product .price .amount' ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_shop-price_font_style',
 		'label'     => esc_html__( 'Price Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.woocommerce ul.products li.product .price .amount',
-			'.woocommerce-page ul.products li.product .price .amount',
+			$css( '.woocommerce', 'ul.products li.product .price .amount' ),
+			$css( '.woocommerce-page', 'ul.products li.product .price .amount' ),
 		),
 	) ) + extra_customizer_font_size_setting( array(
 		'setting'   => 'et_pb_shop-sale_price_font_size',
@@ -4038,16 +4079,16 @@ function extra_customizer_register_module_shop_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.woocommerce ul.products li.product .price ins .amount',
-			'.woocommerce-page ul.products li.product .price ins .amount',
+			$css( '.woocommerce', 'ul.products li.product .price ins .amount' ),
+			$css( '.woocommerce-page', 'ul.products li.product .price ins .amount' ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_shop-sale_price_font_style',
 		'label'     => esc_html__( 'Sale Price Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.woocommerce ul.products li.product .price ins .amount',
-			'.woocommerce-page ul.products li.product .price ins .amount',
+			$css( '.woocommerce', 'ul.products li.product .price ins .amount' ),
+			$css( '.woocommerce-page', 'ul.products li.product .price ins .amount' ),
 		),
 	) );
 
@@ -4057,6 +4098,7 @@ function extra_customizer_register_module_shop_settings() {
 add_filter( 'extra_customizer_register_module_shop_settings', 'extra_customizer_register_module_shop_settings', 1 );
 
 function extra_customizer_register_module_countdown_timer_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array();
 
 	$settings = $settings + extra_customizer_font_size_setting( array(
@@ -4066,14 +4108,14 @@ function extra_customizer_register_module_countdown_timer_settings() {
 		'min'       => 10,
 		'max'       => 32,
 		'selectors' => array(
-			'.et_pb_countdown_timer .title',
+			$css( '.et_pb_countdown_timer .title', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_countdown_timer-header_font_style',
 		'label'     => esc_html__( 'Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_countdown_timer .title',
+			$css( '.et_pb_countdown_timer .title', false ),
 		),
 	) );
 
@@ -4083,6 +4125,7 @@ function extra_customizer_register_module_countdown_timer_settings() {
 add_filter( 'extra_customizer_register_module_countdown_timer_settings', 'extra_customizer_register_module_countdown_timer_settings', 1 );
 
 function extra_customizer_register_module_social_follow_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array(
 		'et_pb_social_media_follow-icon_size' => array(
 			'label'       => esc_html__( 'Follow Font & Icon Size', 'extra' ),
@@ -4109,7 +4152,7 @@ function extra_customizer_register_module_social_follow_settings() {
 		'label'     => esc_html__( 'Button Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_social_media_follow li a.follow_button',
+			$css( '.et_pb_social_media_follow li a.follow_button', false ),
 		),
 	) );
 
@@ -4119,6 +4162,7 @@ function extra_customizer_register_module_social_follow_settings() {
 add_filter( 'extra_customizer_register_module_social_follow_settings', 'extra_customizer_register_module_social_follow_settings', 1 );
 
 function extra_customizer_register_module_fullwidth_slider_settings() {
+	$css      = 'et_builder_maybe_wrap_css_selector';
 	$settings = array(
 		'et_pb_fullwidth_slider-padding' => array(
 			'label'       => esc_html__( 'Top & Bottom Padding', 'extra' ),
@@ -4137,7 +4181,7 @@ function extra_customizer_register_module_fullwidth_slider_settings() {
 						'property'  => 'padding-top-bottom',
 						'format'    => 'padding-top: %value%%; padding-bottom: %value%%;',
 						'selectors' => array(
-							'.et_pb_fullwidth_section .et_pb_slide_description',
+							$css( '.et_pb_fullwidth_section .et_pb_slide_description', false ),
 						),
 					),
 				),
@@ -4152,14 +4196,14 @@ function extra_customizer_register_module_fullwidth_slider_settings() {
 		'min'       => 10,
 		'max'       => 72,
 		'selectors' => array(
-			'.et_pb_fullwidth_section .et_pb_slide_description h2',
+			$css( '.et_pb_fullwidth_section .et_pb_slide_description h2', false ),
 		),
 	) ) + extra_customizer_font_style_setting( array(
 		'setting'   => 'et_pb_fullwidth_slider-header_font_style',
 		'label'     => esc_html__( 'Header Font Style', 'extra' ),
 		'type'      => 'font_style',
 		'selectors' => array(
-			'.et_pb_fullwidth_section .et_pb_slide_description h2',
+			$css( '.et_pb_fullwidth_section .et_pb_slide_description h2', false ),
 		),
 	) );
 

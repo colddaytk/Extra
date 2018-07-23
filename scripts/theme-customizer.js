@@ -96,9 +96,29 @@
 		return font_styles;
 	}
 
-	class_toggle_callbacks = {
+	/**
+	 * This is a simplified version of {@see et_builder_maybe_wrap_css_selector()}.
+	 * If multiple selectors (eg. selector1, selector2) are provided they will each be wrapped.
+	 *
+	 * @param selector
+	 */
+	function maybe_wrap_css_selector(selector) {
+		if ('no' === EXTRA.is_custom_post_type) {
+			return selector;
+		}
 
-	};
+		var selectors = selector.split(',');
+		var result    = '';
+
+		_.forEach(selectors, function(css_selector) {
+			result += EXTRA.css_selector_wrapper + ' ' + css_selector;
+		});
+
+		return result.join(',');
+	}
+
+	var class_toggle_callbacks = {};
+	var css                    = maybe_wrap_css_selector;
 
 	value_bind_callbacks = {
 		extra_sidebar_width_css_value: function (setting_name, property, unformatted_value) {
@@ -108,13 +128,13 @@
 
 			formatted_value =
 				"@media only screen and (min-width: 1025px) {" +
-				".with_sidebar .et_pb_extra_column_sidebar {" +
+				".with_sidebar" + css('.et_pb_extra_column_sidebar') + "{" +
 				"	min-width: " + sidebar_width + "%;" +
 				"	max-width: " + sidebar_width + "%;" +
 				"	width: " + sidebar_width + "%;" +
 				"	flex-basis: " + sidebar_width + "%;" +
 				"}" +
-				".with_sidebar .et_pb_extra_column_main {" +
+				".with_sidebar" + css( '.et_pb_extra_column_main' ) + "{" +
 				"	min-width: " + content_width + "%;" +
 				"	max-width: " + content_width + "%;" +
 				"	width: " + content_width + "%;" +
@@ -130,15 +150,15 @@
 				gutter_width = unformatted_value;
 
 			formatted_value =
-				".et_pb_container { " +
+				css('.et_pb_container') + "{ " +
 				"	padding: 0 " + gutter_width + "px;" +
 				"}" +
 
-				".et_pb_row {" +
+				css('.et_pb_row') + "{" +
 				"	margin: 0 - " + (gutter_width / 2) + "px;" +
 				"}" +
 
-				".et_pb_column {" +
+				css('.et_pb_column') + "{" +
 				"	padding: 0 " + (gutter_width / 2) + "px;" +
 				"}";
 
@@ -171,9 +191,9 @@
 			}
 
 			var formatted_value =
-				".et_pb_tabs_controls li { padding: " + padding_tab_active_top + "px " + unformatted_value + "px " + padding_tab_active_bottom + "px; } " +
-				".et_pb_tabs_controls li.et_pb_tab_active{ padding: " + padding_tab_top_bottom + "px " + unformatted_value + "px; } " +
-				".et_pb_all_tabs { padding: " + padding_tab_content + "px " + unformatted_value + "px ; }";
+				css('.et_pb_tabs_controls li') + "{ padding: " + padding_tab_active_top + "px " + unformatted_value + "px " + padding_tab_active_bottom + "px; } " +
+				css('.et_pb_tabs_controls li.et_pb_tab_active') + "{ padding: " + padding_tab_top_bottom + "px " + unformatted_value + "px; } " +
+				css('.et_pb_all_tabs') + "{ padding: " + padding_tab_content + "px " + unformatted_value + "px ; }";
 
 			return formatted_value;
 		},
@@ -187,8 +207,8 @@
 			unformatted_value = parseInt(unformatted_value);
 
 			var formatted_value =
-				".et_pb_promo { padding: " + unformatted_value + "px " + (unformatted_value * (60 / 40)) + "px; }" +
-				".et_pb_column_1_2 .et_pb_promo, .et_pb_column_1_3 .et_pb_promo, .et_pb_column_1_4 .et_pb_promo { padding: " + unformatted_value + "px; }";
+				css('.et_pb_promo') + "{ padding: " + unformatted_value + "px " + (unformatted_value * (60 / 40)) + "px; }" +
+				css('.et_pb_column_1_2 .et_pb_promo, .et_pb_column_1_3 .et_pb_promo, .et_pb_column_1_4 .et_pb_promo') + "{ padding: " + unformatted_value + "px; }";
 
 			return formatted_value;
 		},
@@ -197,7 +217,7 @@
 			var icon_margin = parseInt(unformatted_value) * 0.57,
 				icon_dimension = parseInt(unformatted_value) * 2;
 
-			return ".et_pb_social_media_follow li a.icon{ margin-right: " + icon_margin + "px; width: " + icon_dimension + "px; height: " + icon_dimension + "px; } .et_pb_social_media_follow li a.icon::before{ width: " + icon_dimension + "px; height: " + icon_dimension + "px; font-size: " + unformatted_value + "px; line-height: " + icon_dimension + "px; } .et_pb_social_media_follow li a.follow_button{ font-size:" + unformatted_value + "px; }";
+			return css('.et_pb_social_media_follow li a.icon') + "{ margin-right: " + icon_margin + "px; width: " + icon_dimension + "px; height: " + icon_dimension + "px; }" + css('.et_pb_social_media_follow li a.icon::before') + "{ width: " + icon_dimension + "px; height: " + icon_dimension + "px; font-size: " + unformatted_value + "px; line-height: " + icon_dimension + "px; }" + css('.et_pb_social_media_follow li a.follow_button') + "{ font-size:" + unformatted_value + "px; }";
 		},
 
 		et_extra_secondary_nav_icon_search_cart_font_size_css_value: function (setting_name, property, unformatted_value) {
@@ -353,7 +373,7 @@
 			}
 
 			return formatted_value;
-		},
+		}
 	};
 
 	// wp.customize( 'et_extra[page_width]', function( value ) {

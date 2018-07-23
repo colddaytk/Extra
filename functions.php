@@ -27,6 +27,7 @@ require $et_template_directory . '/framework/functions.php';
 require $et_template_directory . '/includes/core.php';
 require $et_template_directory . '/includes/plugins-woocommerce-support.php';
 require $et_template_directory . '/includes/plugins-seo-support.php';
+require $et_template_directory . '/includes/plugins-eventon-support.php';
 require $et_template_directory . '/includes/activation.php';
 require $et_template_directory . '/includes/customizer.php';
 require $et_template_directory . '/includes/builder-integrations.php';
@@ -37,8 +38,14 @@ require $et_template_directory . '/includes/projects.php';
 require $et_template_directory . '/includes/widgets.php';
 require $et_template_directory . '/includes/et-social-share.php';
 
-// Load admin only resources
-if ( is_admin() ) {
-	require $et_template_directory . '/includes/admin/admin.php';
-	require $et_template_directory . '/includes/admin/category.php';
+function load_extra_admin() {
+	// Load admin only resources
+	if ( is_admin() ) {
+		$et_template_directory = get_template_directory();
+
+		require $et_template_directory . '/includes/admin/admin.php';
+		require $et_template_directory . '/includes/admin/category.php';
+	}
 }
+// Load admin files after `extra_setup_builder` at `init` hook with 0 priority, to make builder core functions available in admin functions.
+add_action( 'init', 'load_extra_admin', 10 );

@@ -311,9 +311,9 @@ add_action( 'wp_enqueue_scripts', 'et_extra_load_fonts' );
 
 function extra_load_scripts_styles(){
 	$theme_version = SCRIPT_DEBUG ? time() : et_get_theme_version();
-	$template_dir = get_template_directory_uri();
+	$template_dir  = get_template_directory_uri();
 	$script_suffix = et_load_unminified_scripts() ? '' : '.min';
-	$style_suffix = et_load_unminified_styles() && ! is_child_theme() ? '.dev' : '';
+	$style_suffix  = et_load_unminified_styles() && ! is_child_theme() ? '.dev' : '';
 	$extra_scripts_dependencies = apply_filters( 'extra_scripts_dependencies', array( 'jquery', 'imagesloaded' ) );
 
 	// Load dependencies conditionally
@@ -391,6 +391,25 @@ function extra_load_scripts_styles(){
 }
 
 add_action( 'wp_enqueue_scripts', 'extra_load_scripts_styles' );
+
+/**
+ * Switch out the style.css for style-cpt.css when viewing the singular view of a custom post type.
+ * Necessary for child theme support so they don't have to implement this logic.
+ * Hooks at 99999998 so et_builder_dequeue_minifieds_styles() runs after this.
+ */
+function et_extra_replace_stylesheet() {
+	if ( ! et_builder_post_is_of_custom_post_type() || ! et_pb_is_pagebuilder_used( get_the_ID() ) ) {
+		return;
+	}
+
+	$template_directory_uri = preg_quote( get_template_directory_uri(), '/' );
+	$theme_style            = '/^(' . $template_directory_uri . '\/style)(\.dev)?(\.css)$/';
+	$theme_style_cpt        = '$1-cpt$2$3';
+
+	et_core_replace_enqueued_style( $theme_style, $theme_style_cpt, true );
+}
+
+add_action( 'wp_enqueue_scripts', 'et_extra_replace_stylesheet', 99999998 );
 
 /**
  * Modified localization script handle for ET's shortcode localization script (et_shortcodes_strings)
@@ -473,6 +492,7 @@ function extra_print_dynamic_styles() {
 	$unified_styles = $is_singular && ! $forced_inline && ! $builder_in_footer && et_core_is_builder_used_on_current_request();
 	$resource_owner = $unified_styles ? 'core' : 'extra';
 	$resource_slug  = $unified_styles ? 'unified' : 'customizer';
+	$resource_slug .= $unified_styles && et_builder_post_is_of_custom_post_type( $post_id ) && et_pb_is_pagebuilder_used( $post_id ) ? '-cpt' : '';
 
 	if ( $is_preview ) {
 		// Don't let previews cause existing saved static css files to be modified.
@@ -679,6 +699,7 @@ function extra_classes( $classes = array(), $selector = '', $return_array = true
 
 function extra_get_dynamic_selectors() {
 	$page_container    = et_fb_is_enabled() ? '.page-container' : '#page-container';
+	$css               = 'et_builder_maybe_wrap_css_selector';
 	$dynamic_selectors = array(
 		'main_column_with_sidebar'      => '.with_sidebar .et_pb_extra_column_main',
 		'sidebar_column'                => '.with_sidebar .et_pb_extra_column_sidebar',
@@ -727,37 +748,37 @@ function extra_get_dynamic_selectors() {
 			'#footer .et_pb_widget h4.widgettitle',
 		),
 		'body_heading'                  => array(
-			'h1',
-			'h2',
-			'h3',
-			'h4',
-			'h5',
-			'h6',
-			'h1 a',
-			'h2 a',
-			'h3 a',
-			'h4 a',
-			'h5 a',
-			'h6 a',
+			$css( 'h1' ),
+			$css( 'h2' ),
+			$css( 'h3' ),
+			$css( 'h4' ),
+			$css( 'h5' ),
+			$css( 'h6' ),
+			$css( 'h1 a' ),
+			$css( 'h2 a' ),
+			$css( 'h3 a' ),
+			$css( 'h4 a' ),
+			$css( 'h5 a' ),
+			$css( 'h6 a' ),
 		),
 		'archive_heading'               => array(
 			'.archive h1',
 			'.search h1',
 		),
 		'buttons'                       => array(
-			$page_container . ' .button',
-			$page_container . ' button',
-			$page_container . ' button[type="submit"]',
-			$page_container . ' input[type="submit"]',
-			$page_container . ' input[type="reset"]',
-			$page_container . ' input[type="button"]',
-			'.read-more-button',
-			'.comment-body .comment_area .comment-content .reply-container .comment-reply-link',
-			'.widget_tag_cloud a',
-			'.widget_tag_cloud a:visited',
-			'.post-nav .nav-links .button',
-			'a.read-more-button',
-			'a.read-more-button:visited',
+			$css( $page_container . ' .button' ),
+			$css( $page_container . ' button' ),
+			$css( $page_container . ' button[type="submit"]' ),
+			$css( $page_container . ' input[type="submit"]' ),
+			$css( $page_container . ' input[type="reset"]' ),
+			$css( $page_container . ' input[type="button"]' ),
+			$css( '.read-more-button' ),
+			$css( '.comment-body .comment_area .comment-content .reply-container .comment-reply-link' ),
+			$css( '.widget_tag_cloud a' ),
+			$css( '.widget_tag_cloud a:visited' ),
+			$css( '.post-nav .nav-links .button' ),
+			$css( 'a.read-more-button' ),
+			$css( 'a.read-more-button:visited' ),
 			'#footer .widget_tag_cloud a',
 			'#footer .widget_tag_cloud a:visited',
 			'#footer a.read-more-button',
@@ -768,7 +789,7 @@ function extra_get_dynamic_selectors() {
 			'#footer input[type="submit"]',
 			'#footer input[type="reset"]',
 			'#footer input[type="button"]',
-			'.et_pb_button',
+			$css( '.et_pb_button' ),
 		),
 		'accent_color_color'            => array(
 			'.widget_et_recent_tweets .widget_list a',
@@ -777,24 +798,24 @@ function extra_get_dynamic_selectors() {
 			'.widget_et_recent_tweets .widget-footer .et-extra-social-icon::before',
 			'.project-details .project-details-title',
 			'.et_filterable_portfolio .filterable_portfolio_filter a.current',
-			'.et_extra_layout .et_pb_column .module-head h1',
-			'.et_pb_extra_column .module-head h1',
+			$css( '.et_extra_layout', '.et_pb_column .module-head h1', false ),
+			$css( '.et_pb_extra_column .module-head h1', false ),
 			'#portfolio_filter a.current',
-			'.woocommerce div.product div.summary .product_meta a',
-			'.woocommerce-page div.product div.summary .product_meta a',
+			$css( '.woocommerce', 'div.product div.summary .product_meta a' ),
+			$css( '.woocommerce-page', 'div.product div.summary .product_meta a' ),
 			'.et_pb_widget.woocommerce .product_list_widget li .amount',
 			'.et_pb_widget li a:hover, .et_pb_widget.woocommerce .product_list_widget li a:hover',
 			'.et_pb_widget.widget_et_recent_videos .widget_list .title:hover',
 			'.et_pb_widget.widget_et_recent_videos .widget_list .title.active',
-			'.woocommerce .woocommerce-info:before',
+			$css( '.woocommerce', '.woocommerce-info:before' ),
 		),
 		'accent_color_background_color' => array(
 			'.single .score-bar',
 			'.widget_et_recent_reviews .review-breakdowns .score-bar',
-			'.et_pb_extra_module .posts-list article .post-thumbnail',
-			'.et_extra_other_module .posts-list article .post-thumbnail',
-			'.et_pb_widget .widget_list_portrait',
-			'.et_pb_widget .widget_list_thumbnail',
+			$css( '.et_pb_extra_module .posts-list article .post-thumbnail', false ),
+			$css( '.et_extra_other_module .posts-list article .post-thumbnail', false ),
+			$css( '.et_pb_widget .widget_list_portrait' ),
+			$css( '.et_pb_widget .widget_list_thumbnail' ),
 			'.quote-format', /* Check */
 			'.link-format', /* Check */
 			'.audio-format .audio-wrapper',
@@ -805,26 +826,27 @@ function extra_get_dynamic_selectors() {
 			'.post-footer .rating-stars #rated-stars img.star-on', /* ../styles/modules/single/post.less */
 			'.author-box-module .author-box-avatar', /* ../styles/modules/single/post.less */
 			'.timeline-menu li.active a:before',
-			'.woocommerce div.product form.cart .button',
-			'.woocommerce-page div.product form.cart .button',
-			'.woocommerce div.product form.cart .read-more-button',
-			'.woocommerce-page div.product form.cart .read-more-button',
-			'.woocommerce div.product form.cart .post-nav .nav-links .button',
-			'.woocommerce-page div.product form.cart .post-nav .nav-links .button',
-			'.woocommerce .woocommerce-message, .woocommerce-page .woocommerce-message',
+			$css( '.woocommerce', 'div.product form.cart .button' ),
+			$css( '.woocommerce-page', 'div.product form.cart .button' ),
+			$css( '.woocommerce', 'div.product form.cart .read-more-button' ),
+			$css( '.woocommerce-page', 'div.product form.cart .read-more-button' ),
+			$css( '.woocommerce', 'div.product form.cart .post-nav .nav-links .button' ),
+			$css( '.woocommerce-page', 'div.product form.cart .post-nav .nav-links .button' ),
+			$css( '.woocommerce', '.woocommerce-message' ),
+			$css( '.woocommerce-page', '.woocommerce-message' ),
 		),
 		'accent_color_border_color'     => array(
 			'#et-menu > li > ul',
 			'#et-menu li > ul',
 			'#et-menu > li > ul > li > ul',
 			'.et-top-search-primary-menu-item .et-top-search',
-			'.et_pb_module',
-			'.module',
+			$css( '.et_pb_module', false ),
+			$css( '.module' ),
 			'.page article',
 			'.authors-page .page',
 			'#timeline-sticky-header',
-			'.et_extra_other_module',
-			'.woocommerce .woocommerce-info',
+			$css( '.et_extra_other_module', false ),
+			$css( '.woocommerce', '.woocommerce-info' ),
 		),
 	);
 
@@ -1553,3 +1575,26 @@ if ( ! function_exists( 'et_extra_version_rollback' ) ) :
 		return $instance;
 	}
 endif;
+
+/**
+ * Filter the list of post types the Divi Builder is enabled on based on theme options.
+ *
+ * @since ??
+ *
+ * @param array<string, string> $options
+ *
+ * @return array<string, string>
+ */
+if ( ! function_exists( 'et_extra_filter_enabled_builder_post_type_options' ) ) :
+function et_extra_filter_enabled_builder_post_type_options( $options ) {
+	// Cache results to avoid unnecessary option fetching multiple times per request.
+	static $stored_options = null;
+
+	if ( null === $stored_options ) {
+		$stored_options = et_get_option( 'et_pb_post_type_integration', array() );
+	}
+
+	return $stored_options;
+}
+endif;
+add_filter( 'et_builder_enabled_builder_post_type_options', 'et_extra_filter_enabled_builder_post_type_options' );

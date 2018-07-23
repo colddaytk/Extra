@@ -358,10 +358,6 @@ function extra_layout_used() {
 	return false;
 }
 
-function et_pb_is_pagebuilder_used( $page_id ) {
-	return ( 'on' === get_post_meta( $page_id, '_et_pb_use_builder', true ) );
-}
-
 function extra_hide_use_default_editor_button() {
 	global $post, $pagenow;
 

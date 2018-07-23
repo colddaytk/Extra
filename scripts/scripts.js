@@ -918,7 +918,16 @@ window.et_pb_extra_load_event_fired = false;
 					header: '> .group > .header',
 					heightStyle: "content",
 					collapsible: true,
-					active: ($woocommerce_details_accordion.data('desc-tab-active') ? 0 : false)
+					active: ($woocommerce_details_accordion.data('desc-tab-active') ? 0 : false),
+					activate: function() {
+						// WooCommerce page uses builder
+						if ($('body').hasClass('et_pb_pagebuilder_layout')) {
+							// Some module animation reinit only occur if actual window container is changed
+							// Setup flag to force width container change callback even if the window width remains
+							window.et_force_width_container_change = true;
+							$(window).trigger('resize');
+						}
+					}
 				});
 			}
 
