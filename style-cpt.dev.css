@@ -4,7 +4,7 @@
 /*!
 Theme Name: Extra
 Theme URI: http://www.elegantthemes.com/gallery/extra/
-Version: 2.10
+Version: 2.11
 Description: Extra
 Author: Elegant Themes
 Author URI: http://www.elegantthemes.com
@@ -15988,6 +15988,7 @@ a.et_pb_more_button:after,
   }
   .et-db #et-boc .et_pb_column {
     width: 100% !important;
+    margin-bottom: 30px;
   }
   .et-db #et-boc .et_pb_section {
     padding: 50px 0;
@@ -16002,15 +16003,12 @@ a.et_pb_more_button:after,
   .et-db #et-boc .et_section_specialty > .et_pb_row {
     padding: 0;
   }
-  .et-db #et-boc .et_pb_column {
-    margin-bottom: 30px;
-  }
-  .et-db #et-boc .et_pb_row:last-child .et_pb_column:last-child,
+  .et-db #et-boc .et_pb_row .et_pb_column:last-child,
   .et-db #et-boc .et_pb_bottom_divider .et_pb_row:nth-last-child(2) .et_pb_column:last-child,
-  .et-db #et-boc .et_pb_row.et-last-child .et_pb_column.et-last-child {
+  .et-db #et-boc .et_pb_row .et_pb_column.et-last-child {
     margin-bottom: 0;
   }
-  .et-db #et-boc .et_pb_section .et_pb_column .et_pb_module {
+  .et-db #et-boc .et_pb_column .et_pb_module {
     margin-bottom: 30px;
   }
   .et-db #et-boc .et_section_specialty .et_pb_row > .et_pb_column {
@@ -16062,8 +16060,14 @@ a.et_pb_more_button:after,
     margin-right: 0;
   }
   .et-db #et-boc .et_pb_row_4col .et_pb_column:nth-last-child(-n+2),
+  .et-db #et-boc .et_pb_row_4col .et_pb_column.et-last-child,
+  .et-db #et-boc .et_pb_row_4col .et_pb_column.et-last-child-2,
   .et-db #et-boc .et_pb_row_1-4_1-4 .et_pb_column:nth-last-child(-n+2),
-  .et-db #et-boc .et_pb_row_1-2_1-4_1-4 .et_pb_column:nth-last-child(-n+2) {
+  .et-db #et-boc .et_pb_row_1-4_1-4 .et_pb_column.et-last-child,
+  .et-db #et-boc .et_pb_row_1-4_1-4 .et_pb_column.et-last-child-2,
+  .et-db #et-boc .et_pb_row_1-2_1-4_1-4 .et_pb_column:nth-last-child(-n+2),
+  .et-db #et-boc .et_pb_row_1-2_1-4_1-4 .et_pb_column.et-last-child,
+  .et-db #et-boc .et_pb_row_1-2_1-4_1-4 .et_pb_column.et-last-child-2 {
     margin-bottom: 0;
   }
   .et-db #et-boc .et_pb_row.et_pb_row_fullwidth,
@@ -16936,6 +16940,8 @@ a.et_pb_more_button:after,
   }
   .et-db #et-boc .et_pb_section .et_pb_row .et_pb_column.et_pb_column_1_4 {
     width: 100% !important;
+  }
+  .et-db #et-boc .et_pb_row .et_pb_column.et_pb_column_1_4 {
     margin: 0 0 30px 0;
   }
   .et-db #et-boc .et_pb_row .et_pb_column.et_pb_column_1_4:last-child,
