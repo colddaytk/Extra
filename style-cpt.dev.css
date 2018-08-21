@@ -4,7 +4,7 @@
 /*!
 Theme Name: Extra
 Theme URI: http://www.elegantthemes.com/gallery/extra/
-Version: 2.12
+Version: 2.12.1
 Description: Extra
 Author: Elegant Themes
 Author URI: http://www.elegantthemes.com
@@ -13610,6 +13610,7 @@ a.et_pb_more_button:after,
 .et-db #et-boc .et_pb_section_parallax .et_pb_parallax_css,
 .et-db #et-boc .et_pb_slides .et_parallax_bg.et_pb_parallax_css {
   background-attachment: fixed;
+  -webkit-transform: translate3d(0, 0, 0);
 }
 .et-db #et-boc .et_pb_section_parallax.et_pb_row .et_pb_column,
 .et-db #et-boc .et_pb_section_parallax.et_pb_row .et_pb_module,
@@ -15615,6 +15616,7 @@ a.et_pb_more_button:after,
     display: flex;
     direction: ltr;
   }
+  .et-db #et-boc .et_pb_section.et_pb_equal_columns > .et_pb_row > .et_pb_column,
   .et-db #et-boc .et_pb_row.et_pb_equal_columns > .et_pb_column {
     -webkit-box-ordinal-group: 2;
         -ms-flex-order: 1;
