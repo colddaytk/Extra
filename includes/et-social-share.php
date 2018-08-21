@@ -66,7 +66,7 @@ class ET_Twitter_Social_Share extends ET_Social_Share {
 	function init() {
 		$this->name = esc_html__( 'Twitter', 'extra' );
 		$this->slug = 'twitter';
-		$this->share_url = 'http://twitter.com/home?status=%2$s%%20%1$s';
+		$this->share_url = 'http://twitter.com/intent/tweet?text=%2$s%%20%1$s';
 	}
 
 }

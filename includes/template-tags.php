@@ -50,8 +50,8 @@ function extra_post_review( $post_id = 0 ) {
 
 	$review = array();
 
-	$review_breakdowns = get_post_meta( $post_id, '_post_review_box_breakdowns', true );
-	if ( 1 == count( $review_breakdowns ) && empty( $review_breakdowns[0]['title'] ) && empty( $review_breakdowns[0]['rating'] ) ) {
+	$review_breakdowns = (array) get_post_meta( $post_id, '_post_review_box_breakdowns', true );
+	if ( 1 === count( $review_breakdowns ) && empty( $review_breakdowns[0]['title'] ) && empty( $review_breakdowns[0]['rating'] ) ) {
 		return false;
 	}
 
