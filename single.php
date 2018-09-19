@@ -45,6 +45,12 @@
 					<?php
 				endif;
 				?>
+
+				<?php
+				if ( ( comments_open() || get_comments_number() ) && 'on' == et_get_option( 'extra_show_postcomments', 'on' ) ) {
+					comments_template( '', true );
+				}
+				?>
 			</div><!-- /.et_pb_extra_column.et_pb_extra_column_main -->
 
 			<?php get_sidebar(); ?>

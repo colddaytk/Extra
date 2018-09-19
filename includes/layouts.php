@@ -409,3 +409,282 @@ function extra_processing_category_layout( $is_processing ) {
 	}
 }
 endif;
+
+/**
+ * Removes all the new column variations like 1/6, 1/5, 3/5, 2/5 from Category builder
+ * Should be removed once Extra Category Builder will fully support all new columns
+ *
+ * @return string
+ */
+
+if ( ! function_exists( 'extra_filter_category_builder_layout_columns' ) ):
+function extra_filter_category_builder_layout_columns( $default_columns ) {
+	global $post;
+	
+	if ( ! isset( $post->post_type ) || EXTRA_LAYOUT_POST_TYPE !== $post->post_type ) {
+		return $default_columns;
+	}
+
+	$layout_columns =
+		'<% if ( typeof et_pb_specialty !== \'undefined\' && et_pb_specialty === \'on\' ) { %>
+			<li data-layout="1_2,1_2" data-specialty="1,0" data-specialty_columns="2">
+				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_2_variations">
+					<div class="et_pb_variation et_pb_variation_full"></div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+					</div>
+				</div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_specialty_column"></div>
+			</li>
+
+			<li data-layout="1_2,1_2" data-specialty="0,1" data-specialty_columns="2">
+				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_specialty_column"></div>
+
+				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_2_variations">
+					<div class="et_pb_variation et_pb_variation_full"></div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+					</div>
+				</div>
+			</li>
+
+			<li data-layout="1_4,3_4" data-specialty="0,1" data-specialty_columns="3">
+				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_3_4 et_pb_variations et_pb_3_variations">
+					<div class="et_pb_variation et_pb_variation_full"></div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+					</div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_3"></div>
+						<div class="et_pb_variation et_pb_variation_1_3"></div>
+						<div class="et_pb_variation et_pb_variation_1_3"></div>
+					</div>
+				</div>
+			</li>
+
+			<li data-layout="3_4,1_4" data-specialty="1,0" data-specialty_columns="3">
+				<div class="et_pb_layout_column et_pb_column_layout_3_4 et_pb_variations et_pb_3_variations">
+					<div class="et_pb_variation et_pb_variation_full"></div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+					</div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_3"></div>
+						<div class="et_pb_variation et_pb_variation_1_3"></div>
+						<div class="et_pb_variation et_pb_variation_1_3"></div>
+					</div>
+				</div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
+			</li>
+
+			<li data-layout="1_4,1_2,1_4" data-specialty="0,1,0" data-specialty_columns="2">
+				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_2_variations">
+					<div class="et_pb_variation et_pb_variation_full"></div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+					</div>
+				</div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
+			</li>
+
+			<li data-layout="1_2,1_4,1_4" data-specialty="1,0,0" data-specialty_columns="2">
+				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_2_variations">
+					<div class="et_pb_variation et_pb_variation_full"></div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+					</div>
+				</div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
+			</li>
+
+			<li data-layout="1_4,1_4,1_2" data-specialty="0,0,1" data-specialty_columns="2">
+				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_2_variations">
+					<div class="et_pb_variation et_pb_variation_full"></div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+					</div>
+				</div>
+			</li>
+
+			<li data-layout="1_3,2_3" data-specialty="0,1" data-specialty_columns="2">
+				<div class="et_pb_layout_column et_pb_column_layout_1_3 et_pb_specialty_column"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_2_3 et_pb_variations et_pb_2_variations">
+					<div class="et_pb_variation et_pb_variation_full"></div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+					</div>
+				</div>
+			</li>
+
+			<li data-layout="2_3,1_3" data-specialty="1,0" data-specialty_columns="2">
+				<div class="et_pb_layout_column et_pb_column_layout_2_3 et_pb_variations et_pb_2_variations">
+					<div class="et_pb_variation et_pb_variation_full"></div>
+					<div class="et_pb_variation_row">
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+						<div class="et_pb_variation et_pb_variation_1_2"></div>
+					</div>
+				</div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_3 et_pb_specialty_column"></div>
+			</li>
+		<% } else if ( typeof view !== \'undefined\' && typeof view.model.attributes.specialty_columns !== \'undefined\' ) { %>
+			<li data-layout="4_4">
+				<div class="et_pb_layout_column et_pb_column_layout_fullwidth"></div>
+			</li>
+			<li data-layout="1_2,1_2">
+				<div class="et_pb_layout_column et_pb_column_layout_1_2"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_2"></div>
+			</li>
+
+			<% if ( view.model.attributes.specialty_columns === 3 ) { %>
+				<li data-layout="1_3,1_3,1_3">
+					<div class="et_pb_layout_column et_pb_column_layout_1_3"></div>
+					<div class="et_pb_layout_column et_pb_column_layout_1_3"></div>
+					<div class="et_pb_layout_column et_pb_column_layout_1_3"></div>
+				</li>
+			<% } %>
+		<% } else { %>
+			<li data-layout="4_4">
+				<div class="et_pb_layout_column et_pb_column_layout_fullwidth"></div>
+			</li>
+			<li data-layout="1_2,1_2">
+				<div class="et_pb_layout_column et_pb_column_layout_1_2"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_2"></div>
+			</li>
+			<li data-layout="1_3,1_3,1_3">
+				<div class="et_pb_layout_column et_pb_column_layout_1_3"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_3"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_3"></div>
+			</li>
+			<li data-layout="1_4,1_4,1_4,1_4">
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+			</li>
+			<li data-layout="2_3,1_3">
+				<div class="et_pb_layout_column et_pb_column_layout_2_3"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_3"></div>
+			</li>
+			<li data-layout="1_3,2_3">
+				<div class="et_pb_layout_column et_pb_column_layout_1_3"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_2_3"></div>
+			</li>
+			<li data-layout="1_4,3_4">
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_3_4"></div>
+			</li>
+			<li data-layout="3_4,1_4">
+				<div class="et_pb_layout_column et_pb_column_layout_3_4"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+			</li>
+			<li data-layout="1_2,1_4,1_4">
+				<div class="et_pb_layout_column et_pb_column_layout_1_2"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+			</li>
+			<li data-layout="1_4,1_4,1_2">
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_2"></div>
+			</li>
+			<li data-layout="1_4,1_2,1_4">
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_2"></div>
+				<div class="et_pb_layout_column et_pb_column_layout_1_4"></div>
+			</li>
+	<%
+		}
+	%>';
+
+	return $layout_columns;
+}
+add_filter('et_builder_layout_columns', 'extra_filter_category_builder_layout_columns');
+endif;
+
+/**
+ * Removes all the new column variations like 1/6, 1/5, 3/5, 2/5 from Category builder
+ * Should be removed once Extra Category Builder will fully support all new columns
+ *
+ * @return string
+ */
+
+ 
+if ( ! function_exists( 'extra_filter_category_builder_columns' ) ):
+function extra_filter_category_builder_columns( $default_columns ) {
+	global $post;
+	
+	if ( ! isset( $post->post_type ) || EXTRA_LAYOUT_POST_TYPE !== $post->post_type ) {
+		return $default_columns;
+	}
+
+	$columns = array(
+		'specialty' => array(
+			'1_2,1_2' => array(
+				'position' => '1,0',
+				'columns'  => '2',
+			),
+			'1_2,1_2' => array(
+				'position' => '0,1',
+				'columns'  => '2',
+			),
+			'1_4,3_4' => array(
+				'position' => '0,1',
+				'columns'  => '3',
+			),
+			'3_4,1_4' => array(
+				'position' => '1,0',
+				'columns'  => '3',
+			),
+			'1_4,1_2,1_4' => array(
+				'position' => '0,1,0',
+				'columns'  => '2',
+			),
+			'1_2,1_4,1_4' => array(
+				'position' => '1,0,0',
+				'columns'  => '2',
+			),
+			'1_4,1_4,1_2' => array(
+				'position' => '0,0,1',
+				'columns'  => '2',
+			),
+			'1_3,2_3' => array(
+				'position' => '0,1',
+				'columns'  => '2',
+			),
+			'2_3,1_3' => array(
+				'position' => '1,0',
+				'columns'  => '2',
+			),
+		),
+		'regular' => array(
+			'4_4',
+			'1_2,1_2',
+			'1_3,1_3,1_3',
+			'1_4,1_4,1_4,1_4',
+			'2_3,1_3',
+			'1_3,2_3',
+			'1_4,3_4',
+			'3_4,1_4',
+			'1_2,1_4,1_4',
+			'1_4,1_4,1_2',
+			'1_4,1_2,1_4',
+		)
+	);
+
+	return $columns;
+}
+add_filter('et_builder_get_columns', 'extra_filter_category_builder_columns');
+endif;
