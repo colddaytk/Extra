@@ -28,6 +28,7 @@ require $et_template_directory . '/includes/core.php';
 require $et_template_directory . '/includes/plugins-woocommerce-support.php';
 require $et_template_directory . '/includes/plugins-seo-support.php';
 require $et_template_directory . '/includes/plugins-eventon-support.php';
+require $et_template_directory . '/includes/plugins-lifterlms-support.php';
 require $et_template_directory . '/includes/activation.php';
 require $et_template_directory . '/includes/customizer.php';
 require $et_template_directory . '/includes/builder-integrations.php';
