@@ -4,7 +4,7 @@
 /*!
 Theme Name: Extra
 Theme URI: http://www.elegantthemes.com/gallery/extra/
-Version: 2.15
+Version: 2.16
 Description: Extra
 Author: Elegant Themes
 Author URI: http://www.elegantthemes.com
@@ -12553,6 +12553,10 @@ a.et_pb_more_button:after,
 .et_pb_module_inner {
   position: relative;
 }
+.et_hover_enabled:hover {
+  position: relative;
+  z-index: 90000;
+}
 /* Button Styles */
 .et_pb_button {
   font-size: 20px;
@@ -12604,6 +12608,10 @@ a.et_pb_more_button:after,
   font-style: normal;
   font-weight: 400;
   text-shadow: none;
+}
+.et_pb_button.et_pb_hovered:hover:after,
+.et_pb_button.et_hover_enabled:hover:after {
+  transition: none !important;
 }
 .et_pb_button:before {
   display: none;
@@ -13828,6 +13836,7 @@ p.et_pb_gallery_caption {
 .et_pb_newsletter_form p.et_pb_newsletter_field.et_pb_signup_custom_field {
   padding-left: 0;
 }
+.et_pb_newsletter_form .input,
 .et_pb_newsletter_form input[type="text"],
 .et_pb_newsletter_form input[type="password"],
 .et_pb_newsletter_form p.et_pb_newsletter_field input[type="text"],
@@ -14685,6 +14694,8 @@ h1.et_pb_contact_main_title {
   position: absolute;
   top: 0;
   left: 0;
+  width: 100% !important;
+  height: auto !important;
 }
 .et_pb_circle_counter .percent {
   word-wrap: initial;
@@ -15386,6 +15397,7 @@ h1.et_pb_contact_main_title {
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
+  transition: inherit;
 }
 .et_pb_audio_module_content {
   margin-left: 220px;
@@ -16065,6 +16077,10 @@ ul.et_pb_social_media_follow {
   position: absolute;
   pointer-events: none;
   width: 100%;
+}
+.et_pb_top_inside_divider.et-no-transition,
+.et_pb_bottom_inside_divider.et-no-transition {
+  transition: none !important;
 }
 .et_pb_top_inside_divider {
   margin-top: -1px;
@@ -17212,6 +17228,7 @@ span.comment_date {
 #commentform input[type="url"] {
   padding: 12px;
   color: #999;
+  line-height: 1em;
   background-color: #EEE;
   font-size: 18px;
   border-width: 0px;
@@ -20585,6 +20602,10 @@ span.comment_date {
 }
 .has-box-shadow-overlay {
   position: relative;
+}
+/* Link Options CSS */
+.et_clickable {
+  cursor: pointer;
 }
 /* Text meant only for screen readers. */
 .screen-reader-text {
