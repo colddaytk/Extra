@@ -4,7 +4,7 @@
 /*!
 Theme Name: Extra
 Theme URI: http://www.elegantthemes.com/gallery/extra/
-Version: 2.17.1
+Version: 2.17.2
 Description: Extra
 Author: Elegant Themes
 Author URI: http://www.elegantthemes.com
@@ -13255,14 +13255,32 @@ p.et_pb_gallery_caption {
   font-weight: 600;
   line-height: 1.6em;
   text-align: right;
-  padding: 1px 3% 1px 1px;
+  padding: 1px;
   display: block;
   min-height: 6px;
+  z-index: 2;
+  overflow: hidden;
+}
+.et_pb_counter_amount.overlay {
+  background-color: transparent !important;
+  color: #2ea3f2;
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  overflow: visible;
 }
 /* Bar Counter Module */
 .et_pb_counters span.et_pb_counter_amount_number {
   display: inline-block;
-  padding-left: 5px;
+  padding: 0 10px;
+}
+.et_pb_counters span.et_pb_counter_amount_number:before,
+.et_pb_counters span.et_pb_counter_amount_number:after {
+  content: "";
+  display: block;
+  max-width: 20px;
+  min-width: 5px;
 }
 .et_pb_counters.et_pb_section_video > li {
   position: relative;
