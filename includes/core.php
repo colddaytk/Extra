@@ -118,11 +118,11 @@ add_filter( 'et_custom_background_args', 'extra_custom_background_args' );
 
 function extra_custom_background_cb() {
 	// $background is the saved custom image, or the default image.
-	$background = set_url_scheme( get_background_image() );
+	$background = esc_url( set_url_scheme( get_background_image() ) );
 
 	// $color is the saved custom color.
 	// A default has to be specified in style.css. It will not be printed here.
-	$color = get_background_color();
+	$color = esc_html( get_background_color() );
 
 	if ( $color === get_theme_support( 'custom-background', 'default-color' ) ) {
 		$color = false;
@@ -168,7 +168,7 @@ function extra_custom_background_cb() {
 	}
 ?>
 <style type="text/css" id="extra-custom-background-css">
-body.custom-background { <?php echo trim( $style ); ?> }
+body.custom-background { <?php echo et_core_intentionally_unescaped( trim( $style ), 'html' ); ?> }
 </style>
 <?php
 }

@@ -1301,8 +1301,8 @@ class Extra_Layout_Home_Selector_Meta_Box extends ET_Meta_Box {
 			?>
 			<div class="form-field">
 				<label>
-					<input type="checkbox" name="<?php echo $key; ?>" value="1" <?php checked( $field['value'], '1' ); ?> />
-					<?php echo $field['title']; ?>
+					<input type="checkbox" name="<?php echo esc_attr( $key ); ?>" value="1" <?php checked( $field['value'], '1' ); ?> />
+					<?php echo esc_html( $field['title'] ); ?>
 				</label>
 				<?php if ( !empty( $field['description'] ) ) { ?>
 					<p class="description"><?php echo esc_html( $field['description'] ); ?></p>
@@ -1392,13 +1392,13 @@ class Extra_Project_Details_Meta_Box extends ET_Meta_Box {
 			<div class="form-field">
 				<label>
 					<?php echo $this->fields[EXTRA_PROJECT_DETAILS_TITLE_META_KEY]['title']; ?><br />
-					<input type="text" class="regular-text" name="<?php echo EXTRA_PROJECT_DETAILS_TITLE_META_KEY; ?>" value="<?php echo $this->fields[EXTRA_PROJECT_DETAILS_TITLE_META_KEY]['value']; ?>" />
+					<input type="text" class="regular-text" name="<?php echo EXTRA_PROJECT_DETAILS_TITLE_META_KEY; ?>" value="<?php echo esc_attr( $this->fields[EXTRA_PROJECT_DETAILS_TITLE_META_KEY]['value'] ); ?>" />
 				</label>
 			</div>
 			<div class="form-field">
 				<label>
 					<?php echo $this->fields[EXTRA_PROJECT_DETAILS_PROJECT_URL_META_KEY]['title']; ?><br />
-					<input type="text" class="regular-text" name="<?php echo EXTRA_PROJECT_DETAILS_PROJECT_URL_META_KEY; ?>" value="<?php echo $this->fields[EXTRA_PROJECT_DETAILS_PROJECT_URL_META_KEY]['value']; ?>" />
+					<input type="text" class="regular-text" name="<?php echo EXTRA_PROJECT_DETAILS_PROJECT_URL_META_KEY; ?>" value="<?php echo esc_attr( $this->fields[EXTRA_PROJECT_DETAILS_PROJECT_URL_META_KEY]['value'] ); ?>" />
 				</label>
 				<label>
 					<?php echo $this->fields[EXTRA_PROJECT_DETAILS_PROJECT_URL_NEW_WINDOW_META_KEY]['title']; ?>
@@ -1408,7 +1408,7 @@ class Extra_Project_Details_Meta_Box extends ET_Meta_Box {
 			<div class="form-field">
 				<label>
 					<?php echo $this->fields[EXTRA_PROJECT_DETAILS_PROJECT_URL_TEXT_META_KEY]['title']; ?><br />
-					<input type="text" class="regular-text" name="<?php echo EXTRA_PROJECT_DETAILS_PROJECT_URL_TEXT_META_KEY; ?>" value="<?php echo $this->fields[EXTRA_PROJECT_DETAILS_PROJECT_URL_TEXT_META_KEY]['value']; ?>" />
+					<input type="text" class="regular-text" name="<?php echo EXTRA_PROJECT_DETAILS_PROJECT_URL_TEXT_META_KEY; ?>" value="<?php echo esc_attr( $this->fields[EXTRA_PROJECT_DETAILS_PROJECT_URL_TEXT_META_KEY]['value'] ); ?>" />
 				</label>
 			</div>
 			<div class="form-field">
@@ -1427,7 +1427,7 @@ class Extra_Project_Details_Meta_Box extends ET_Meta_Box {
 				<label>
 					<?php echo $this->fields[EXTRA_PROJECT_DETAILS_SHORT_DESC_META_KEY]['title']; ?>
 					<br />
-					<textarea class="large-text code" name="<?php echo EXTRA_PROJECT_DETAILS_SHORT_DESC_META_KEY; ?>"><?php echo $this->fields[EXTRA_PROJECT_DETAILS_SHORT_DESC_META_KEY]['value']; ?></textarea>
+					<textarea class="large-text code" name="<?php echo EXTRA_PROJECT_DETAILS_SHORT_DESC_META_KEY; ?>"><?php echo esc_textarea( $this->fields[EXTRA_PROJECT_DETAILS_SHORT_DESC_META_KEY]['value'] ); ?></textarea>
 				</label>
 			</div>
 		</div>

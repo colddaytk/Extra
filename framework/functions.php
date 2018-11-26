@@ -690,10 +690,10 @@ if ( !function_exists( 'et_dropdown_google_font_choices' ) ) {
 			$google_fonts = et_builder_get_fonts( array(
 				'prepend_standard_fonts' => false,
 			) );
-		
+
 			// combine google fonts with custom user fonts
 			$google_fonts = array_merge( $user_fonts, $google_fonts );
-		
+
 			$et_domain_fonts = array(
 				'ru_RU' => 'cyrillic',
 				'uk'    => 'cyrillic',
@@ -828,7 +828,7 @@ if ( class_exists( 'WP_Customize_Control' ) ) {
 					<span class="customize-control-title"><?php echo esc_html( $this->label ); ?></span>
 				<?php endif;
 if ( ! empty( $this->description ) ) : ?>
-					<span class="description customize-control-description"><?php echo $this->description; ?></span>
+					<span class="description customize-control-description"><?php echo esc_html( $this->description ); ?></span>
 				<?php endif; ?>
 			</label>
 			<?php $current_values = explode( '|', $this->value() );
@@ -837,7 +837,7 @@ if ( ! empty( $this->description ) ) : ?>
 			foreach ( $this->choices as $value => $label ) :
 				$checked_class = in_array( $value, $current_values ) ? ' et_font_style_checked' : '';
 				?>
-					<span class="et_font_style et_font_value_<?php echo $value; echo $checked_class; ?>">
+					<span class="et_font_style et_font_value_<?php echo esc_attr( $value ); echo $checked_class; ?>">
 						<input type="checkbox" class="et_font_style_checkbox" value="<?php echo esc_attr( $value ); ?>" <?php checked( in_array( $value, $current_values ) ); ?> />
 					</span>
 				<?php
@@ -884,7 +884,7 @@ if ( ! empty( $this->description ) ) : ?>
 				<span class="customize-control-title"><?php echo esc_html( $this->label ); ?></span>
 			<?php endif; ?>
 			<?php if ( ! empty( $this->description ) ) : ?>
-				<span class="description customize-control-description"><?php echo $this->description; ?></span>
+				<span class="description customize-control-description"><?php echo esc_html( $this->description ); ?></span>
 			<?php endif; ?>
 			<input type="<?php echo esc_attr( $this->type ); ?>" <?php $this->input_attrs(); ?> value="<?php echo esc_attr( $this->value() ); ?>" <?php $this->link(); ?> data-reset_value="<?php echo esc_attr( $this->setting->default ); ?>" />
 			<input type="number" <?php $this->input_attrs(); ?> class="et-pb-range-input" value="<?php echo esc_attr( $this->value() ); ?>" />
@@ -909,7 +909,7 @@ if ( ! empty( $this->description ) ) : ?>
 				<span class="customize-control-title"><?php echo esc_html( $this->label ); ?></span>
 			<?php endif; ?>
 			<?php if ( ! empty( $this->description ) ) : ?>
-				<span class="description customize-control-description"><?php echo $this->description; ?></span>
+				<span class="description customize-control-description"><?php echo esc_html( $this->description ); ?></span>
 			<?php endif; ?>
 
 			<?php $this->_render_select_start_el(); ?>
@@ -928,7 +928,7 @@ if ( ! empty( $this->description ) ) : ?>
 						}
 					}
 
-					echo '<option value="' . esc_attr( $value ) . '"' . selected( $this->value(), $value, false ) . $data_output . '>' . $attributes['label'] . '</option>';
+					echo '<option value="' . esc_attr( $value ) . '"' . selected( $this->value(), $value, false ) . $data_output . '>' . esc_html( $attributes['label'] ) . '</option>';
 				}
 				?>
 			</select>

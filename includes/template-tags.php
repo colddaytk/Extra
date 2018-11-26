@@ -678,7 +678,8 @@ function extra_post_share_links( $echo = true ) {
 	$networks = array();
 
 	// this is backwards due to how epanel saves checkboxes values
-	$excluded_networks = et_get_option( "extra_post_share_icons", array() );
+	$excluded_networks = et_get_option( "extra_post_share_icons" );
+	$excluded_networks = !empty( $excluded_networks ) ? $excluded_networks : array();
 	foreach ( ET_Social_Share::get_networks() as $network ) {
 		if ( !in_array( $network->slug, $excluded_networks ) ) {
 			$networks[$network->slug] = $network;
