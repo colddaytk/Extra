@@ -24,6 +24,12 @@
 					$(this).hide();
 				}
 			});
+
+			if ($page_template_meta_boxes.is(':visible')) {
+				$('#et_pb_layout').removeClass('first-visible');
+			} else {
+				$('#et_pb_layout').addClass('first-visible');
+			}
 		}).trigger('change');
 
 		$('ul.checklist').on('change', 'input[type=checkbox]', function () {

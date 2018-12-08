@@ -46,7 +46,7 @@ class Et_Post_Format_Meta_Box extends ET_Meta_Box {
 	<?php
 	}
 
-	function save( $post_id ) {
+	public function save( $post_id, $post ) {
 		if ( isset( $_POST['et_post_format'] ) ) {
 			$post_format = sanitize_text_field( $_POST['et_post_format'] );
 			et_set_post_format( $post_id, $post_format );

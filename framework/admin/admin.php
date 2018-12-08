@@ -230,8 +230,9 @@ class ET_Meta_Box {
 
 		if ( 'post.php' != $pagenow ) return $post_id;
 
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return $post_id;
+		}
 
 		$post_type = get_post_type_object( $post->post_type );
 		if ( ! current_user_can( $post_type->cap->edit_post, $post_id ) ) {
@@ -247,7 +248,7 @@ class ET_Meta_Box {
 		}
 
 		$this->fields();
-		$this->save( $post_id );
+		$this->save( $post_id, $post );
 	}
 
 	function save_fields( $post_id ) {
@@ -279,7 +280,7 @@ class ET_Meta_Box {
 		}
 	}
 
-	function save( $post_id ) {
+	function save( $post_id, $post ) {
 		$this->save_fields( $post_id );
 	}
 

@@ -51,6 +51,15 @@
 		});
 
 		$post_format_meta_boxes.each(function () {
+			var selected_format  = $('input[name=et_post_format]:checked').val();
+			var this_post_format = $(this).find(".post-format-options").val();
+
+			if (selected_format === this_post_format) {
+				$(this).removeClass('hide-if-js');
+			} else {
+				$(this).addClass('hide-if-js');
+			}
+			
 			var this_id = $(this).attr('id');
 			$('#' + this_id + '-hide').closest('label').hide();
 		});

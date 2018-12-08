@@ -12,16 +12,11 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 		$this->slug = 'et_pb_posts';
 		$this->post_types = array( EXTRA_LAYOUT_POST_TYPE );
 
-		$this->whitelisted_fields = array();
-		foreach ( $this->get_fields() as $name => $field ) {
-			$this->whitelisted_fields[] = $name;
-		}
-
 		$this->main_css_element = '%%order_class%%';
 
-		$this->options_toggles = $this->get_options_toggles();
+		$this->settings_modal_toggles = $this->get_options_toggles();
 
-		$this->advanced_options = array(
+		$this->advanced_fields = array(
 			'fonts'                 => array(
 				'header'     => $this->set_frequent_advanced_options( 'header' ),
 				'subheader'  => $this->set_frequent_advanced_options( 'subheader' ),
@@ -103,7 +98,7 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 			'custom_margin_padding' => array(),
 		);
 
-		$this->custom_css_options = array(
+		$this->custom_css_fields = array(
 			'head'                   => array(
 				'label'    => esc_html__( 'Module Head', 'et_builder' ),
 				'selector' => '.module-head',
@@ -279,13 +274,24 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 	function get_fields() {
 		$fields = array(
 			'category_id'                 => array(
-				'label'           => esc_html__( 'Categories', 'extra' ),
-				'type'            => 'custom',
-				'description'     => esc_html__( 'Choose categories.', 'extra' ),
-				'renderer'        => array(
-					$this,
-					'category_field_renderer',
+				'label'            => esc_html__( 'Categories', 'extra' ),
+				'type'             => 'categories',
+				'description'      => esc_html__( 'Choose categories.', 'extra' ),
+				'renderer_options' => array(
+					'field_name'   => 'et_pb_category_id',
+					'use_terms'    => false,
+					'custom_items' => array(
+						array( 
+							'term_id' => '0', 
+							'name' => esc_html__( 'All', 'extra' ),
+						),
+						array( 
+							'term_id' => '-1', 
+							'name' => esc_html__( 'Current Category / Tag / Taxonomy', 'extra' ),
+						),
+					),
 				),
+				'default'         => '0',
 				'priority'        => 1,
 				'option_category' => 'configuration',
 				'toggle_slug'     => 'main_content',
@@ -324,15 +330,15 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 				),
 				'description'     => esc_html__( 'Choose a heading style.', 'extra' ),
 				'affects'         => array(
-					'#et_pb_heading_primary',
-					'#et_pb_heading_sub',
+					'heading_primary',
+					'heading_sub',
 				),
 				'option_category' => 'configuration',
 				'toggle_slug'     => 'elements',
 			),
 			'heading_primary'             => array(
 				'label'           => esc_html__( 'Primary Heading', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'description'     => esc_html__( 'The primary heading.', 'extra' ),
 				'depends_show_if' => 'custom',
 				'option_category' => 'configuration',
@@ -340,7 +346,7 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 			),
 			'heading_sub'                 => array(
 				'label'           => esc_html__( 'Sub Heading', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'description'     => esc_html__( 'The sub heading.', 'extra' ),
 				'depends_show_if' => 'custom',
 				'option_category' => 'configuration',
@@ -348,7 +354,7 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 			),
 			'posts_per_page'              => array(
 				'label'           => esc_html__( 'Posts Limit', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'description'     => esc_html__( 'The number of posts shown.', 'extra' ),
 				'priority'        => 3,
 				'option_category' => 'configuration',
@@ -444,7 +450,7 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 					'on'  => esc_html__( 'Yes', 'extra' ),
 					'off' => esc_html__( 'No', 'extra' ),
 				),
-				'affects'         => array( '#et_pb_date_format' ),
+				'affects'         => array( 'date_format' ),
 				'description'     => esc_html__( "Turn the dispay of each post's date on or off.", 'extra' ),
 				'priority'        => 5,
 				'option_category' => 'configuration',
@@ -452,7 +458,7 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 			),
 			'date_format'                 => array(
 				'label'               => esc_html__( 'Date Format', 'extra' ),
-				'type'                => 'input',
+				'type'                => 'text',
 				'depends_show_if_not' => "off",
 				'description'         => esc_html__( 'The format for the date display in PHP date() format', 'extra' ),
 				'option_category'     => 'configuration',
@@ -476,10 +482,9 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 			),
 			'hover_overlay_icon'          => array(
 				'label'               => esc_html__( 'Hover Overlay Icon Picker', 'et_builder' ),
-				'type'                => 'text',
+				'type'                => 'select_icon',
 				'option_category'     => 'configuration',
 				'class'               => array( 'et-pb-font-icon' ),
-				'renderer'            => 'et_pb_get_font_icon_list',
 				'renderer_with_field' => true,
 				'tab_slug'            => 'advanced',
 				'toggle_slug'         => 'overlay',
@@ -556,69 +561,32 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 		return array_merge( $fields, $advanced_design_fields );
 	}
 
-	function category_field_renderer( $field ) {
-		$name = $this->get_field_name( $field );
-		$temp_name = $name . '_temp';
-
-		$output = sprintf(
-			'<%% var %1$s = typeof %2$s !== \'undefined\' ? %2$s.split( \',\' ) : []; %%>',
-			esc_attr( $temp_name ),
-			esc_attr( $name )
-		);
-
-		$output .= sprintf( '<label><input type="checkbox" name="%1$s" value="%2$s" <%%= _.contains( %4$s, \'%2$s\' ) ? checked=\'checked\' : \'\' %%> > %3$s</label><br/>',
-			esc_attr( $name ),
-			esc_attr( '0' ),
-			esc_html__( 'All', 'extra' ),
-			esc_attr( $temp_name )
-		);
-
-		$output .= sprintf( '<label><input type="checkbox" name="%1$s" value="%2$s" <%%= _.contains( %4$s, \'%2$s\' ) ? checked=\'checked\' : \'\' %%> > %3$s</label><br/>',
-			esc_attr( $name ),
-			esc_attr( '-1' ),
-			esc_html__( 'Current Category / Tag / Taxonomy', 'extra' ),
-			esc_attr( $temp_name )
-		);
-
-		$cats_array = get_categories( 'hide_empty=0' );
-		foreach ( $cats_array as $categs ) {
-			$output .= sprintf( '<label><input type="checkbox" name="%1$s" value="%2$s" <%%= _.contains( %4$s, \'%2$s\' ) ? checked=\'checked\' : \'\' %%> > %3$s</label><br/>',
-				esc_attr( $name ),
-				esc_attr( $categs->cat_ID ),
-				esc_html( $categs->cat_name ),
-				esc_attr( $temp_name )
-			);
-		}
-
-		return $output;
-	}
-
 	function process_bool_shortcode_atts() {
 		foreach ( $this->get_fields() as $field_name => $field ) {
 			if ( 'yes_no_button' == $field['type'] ) {
-				$this->shortcode_atts[ $field_name ] = 'on' == $this->shortcode_atts[ $field_name ] ? true : false;
+				$this->props[ $field_name ] = 'on' == $this->props[ $field_name ] ? true : false;
 			}
 		}
 
-		$this->shortcode_atts['use_tax_query'] = false;
+		$this->props['use_tax_query'] = false;
 	}
 
 	function shortcode_atts() {
 		$this->process_bool_shortcode_atts();
 	}
 
-	function shortcode_callback( $atts, $content = null, $function_name ) {
+	function render( $atts, $content = null, $function_name ) {
 		global $extra_displayed_post_ids;
 
 		$args = array(
 			'post_type'      => 'post',
-			'posts_per_page' => isset( $this->shortcode_atts['posts_per_page'] ) && is_numeric( $this->shortcode_atts['posts_per_page'] ) ? $this->shortcode_atts['posts_per_page'] : 5,
-			'order'          => $this->shortcode_atts['order'],
-			'orderby'        => $this->shortcode_atts['orderby'],
-			'ignore_displayed_posts' => isset( $this->shortcode_atts['ignore_displayed_posts'] ) ? $this->shortcode_atts['ignore_displayed_posts'] : false,
+			'posts_per_page' => isset( $this->props['posts_per_page'] ) && is_numeric( $this->props['posts_per_page'] ) ? $this->props['posts_per_page'] : 5,
+			'order'          => $this->props['order'],
+			'orderby'        => $this->props['orderby'],
+			'ignore_displayed_posts' => isset( $this->props['ignore_displayed_posts'] ) ? $this->props['ignore_displayed_posts'] : false,
 		);
 
-		if ( 'rating' == $this->shortcode_atts['orderby'] ) {
+		if ( 'rating' == $this->props['orderby'] ) {
 			$args['orderby'] = 'meta_value_num';
 			$args['meta_key'] = '_extra_rating_average';
 		}
@@ -636,36 +604,36 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 		// need to hook into pre_get_posts to set is_home = true, then unhook afterwards
 		add_action( 'pre_get_posts', array( $this, 'make_is_home' ) );
 
-		$this->shortcode_atts['module_posts'] = new WP_Query( $args );
+		$this->props['module_posts'] = new WP_Query( $args );
 
 		// unhook afterwards
 		remove_action( 'pre_get_posts', array( $this, 'make_is_home' ) );
 
-		$posts_per_page = $this->shortcode_atts['module_posts']->get( 'posts_per_page' );
+		$posts_per_page = $this->props['module_posts']->get( 'posts_per_page' );
 
 		// only slice if there is a limit that where trying to enforce respect upon and if it's disrespecting the limit
-		if ( $posts_per_page > 0 && $this->shortcode_atts['module_posts']->post_count > $posts_per_page ) {
+		if ( $posts_per_page > 0 && $this->props['module_posts']->post_count > $posts_per_page ) {
 			$sticky_posts = get_option( 'sticky_posts' );
 			if ( is_array( $sticky_posts ) && !empty( $sticky_posts ) ) {
 				// make wp_query respect posts_per_page even when sticky posts are involved
-				$module_posts = $this->shortcode_atts['module_posts'];
+				$module_posts = $this->props['module_posts'];
 				$module_posts->posts = array_slice( $module_posts->posts, 0, $posts_per_page );
 				$module_posts->post_count = $posts_per_page;
-				$this->shortcode_atts['module_posts'] = $module_posts;
+				$this->props['module_posts'] = $module_posts;
 			}
 		}
 
-		if ( ! empty( $this->shortcode_atts['terms_names'] ) ) {
-			$category_name = $this->shortcode_atts['terms_names'];
-		} else if ( ! empty( $this->shortcode_atts['term_name'] ) ) {
-			$category_name = $this->shortcode_atts['term_name'];
+		if ( ! empty( $this->props['terms_names'] ) ) {
+			$category_name = $this->props['terms_names'];
+		} else if ( ! empty( $this->props['term_name'] ) ) {
+			$category_name = $this->props['term_name'];
 		} else {
 			$category_name = esc_html__( 'All', 'extra' );
 		}
 
-		$this->shortcode_atts['is_all_categories'] = (bool) empty( $this->shortcode_atts['term_name'] );
+		$this->props['is_all_categories'] = (bool) empty( $this->props['term_name'] );
 
-		switch ( $this->shortcode_atts['orderby'] ) {
+		switch ( $this->props['orderby'] ) {
 			case 'comment_count':
 				$filter_title = esc_html__( 'Popular', 'extra' );
 				break;
@@ -678,31 +646,31 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 				break;
 		}
 
-		if ( !empty( $this->shortcode_atts['heading_style'] ) ) {
-			switch ( $this->shortcode_atts['heading_style'] ) {
+		if ( !empty( $this->props['heading_style'] ) ) {
+			switch ( $this->props['heading_style'] ) {
 				case 'filter':
-					$this->shortcode_atts['title'] = $filter_title;
-					$this->shortcode_atts['sub_title'] = $category_name;
+					$this->props['title'] = $filter_title;
+					$this->props['sub_title'] = $category_name;
 					break;
 				case 'custom':
-					$this->shortcode_atts['title'] = !empty( $this->shortcode_atts['heading_primary'] ) ? esc_html( $this->shortcode_atts['heading_primary'] ) : '';
-					$this->shortcode_atts['sub_title'] = !empty( $this->shortcode_atts['heading_sub'] ) ? esc_html( $this->shortcode_atts['heading_sub'] ) : '';
+					$this->props['title'] = !empty( $this->props['heading_primary'] ) ? esc_html( $this->props['heading_primary'] ) : '';
+					$this->props['sub_title'] = !empty( $this->props['heading_sub'] ) ? esc_html( $this->props['heading_sub'] ) : '';
 					break;
 				case 'category':
 				default:
-					$this->shortcode_atts['title'] = $category_name;
-					$this->shortcode_atts['sub_title'] = $filter_title;
+					$this->props['title'] = $category_name;
+					$this->props['sub_title'] = $filter_title;
 					break;
 			}
 		}
 
-		if ( !empty( $this->shortcode_atts['term_color'] ) ) {
-			$this->shortcode_atts['border_top_color'] = $this->shortcode_atts['term_color'];
-			$this->shortcode_atts['module_title_color'] = $this->shortcode_atts['term_color'];
+		if ( !empty( $this->props['term_color'] ) ) {
+			$this->props['border_top_color'] = $this->props['term_color'];
+			$this->props['module_title_color'] = $this->props['term_color'];
 		} else {
 
 			$color = et_builder_accent_color();
-			$module_posts = $this->shortcode_atts['module_posts'];
+			$module_posts = $this->props['module_posts'];
 
 			if ( isset( $module_posts->posts[0] ) ) {
 				$featured_post = $module_posts->posts[0];
@@ -716,85 +684,85 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 				}
 			}
 
-			$this->shortcode_atts['term_color'] = $color;
-			$this->shortcode_atts['border_top_color'] = $color;
-			$this->shortcode_atts['module_title_color'] = $color;
+			$this->props['term_color'] = $color;
+			$this->props['border_top_color'] = $color;
+			$this->props['module_title_color'] = $color;
 		}
 
-		if ( isset( $this->shortcode_atts['module_class'] ) ) {
-			$this->shortcode_atts['module_class'] = ET_Builder_Element::add_module_order_class( $this->shortcode_atts['module_class'], $this->slug );
+		if ( isset( $this->props['module_class'] ) ) {
+			$this->props['module_class'] = ET_Builder_Element::add_module_order_class( $this->props['module_class'], $this->slug );
 		}
 
 		// Adding styling classes to module
-		if ( !empty( $this->shortcode_atts['remove_drop_shadow'] ) && 'on' === $this->shortcode_atts['remove_drop_shadow'] ) {
-			$this->shortcode_atts['module_class'] = $this->shortcode_atts['module_class'] . ' et_pb_no_drop_shadow';
+		if ( !empty( $this->props['remove_drop_shadow'] ) && 'on' === $this->props['remove_drop_shadow'] ) {
+			$this->props['module_class'] = $this->props['module_class'] . ' et_pb_no_drop_shadow';
 		}
 
 		// Print styling for general options
-		if ( isset( $this->shortcode_atts['border_radius'] ) && '' !== $this->shortcode_atts['border_radius'] ) {
+		if ( isset( $this->props['border_radius'] ) && '' !== $this->props['border_radius'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.et_pb_extra_module',
 				'declaration' => sprintf(
 					'-moz-border-radius: %1$s;
 					-webkit-border-radius: %1$s;
 					border-radius: %1$s;',
-					esc_html( $this->shortcode_atts['border_radius'] )
+					esc_html( $this->props['border_radius'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['max_width'] ) && '' !== $this->shortcode_atts['max_width'] ) {
+		if ( isset( $this->props['max_width'] ) && '' !== $this->props['max_width'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%',
 				'declaration' => sprintf(
 					'max-width: %1$s;',
-					esc_html( et_builder_process_range_value( $this->shortcode_atts['max_width'] ) )
+					esc_html( et_builder_process_range_value( $this->props['max_width'] ) )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['post_format_icon_bg_color'] ) && '' !== $this->shortcode_atts['post_format_icon_bg_color'] ) {
+		if ( isset( $this->props['post_format_icon_bg_color'] ) && '' !== $this->props['post_format_icon_bg_color'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .post-thumbnail img',
 				'declaration' => sprintf(
 					'background-color: %1$s !important;',
-					esc_html( $this->shortcode_atts['post_format_icon_bg_color'] )
+					esc_html( $this->props['post_format_icon_bg_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['hover_overlay_color'] ) && '' !== $this->shortcode_atts['hover_overlay_color'] ) {
+		if ( isset( $this->props['hover_overlay_color'] ) && '' !== $this->props['hover_overlay_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .et_pb_extra_overlay',
 				'declaration' => sprintf(
 					'background-color: %1$s;
 					border-color: %1$s;',
-					esc_html( $this->shortcode_atts['hover_overlay_color'] )
+					esc_html( $this->props['hover_overlay_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['hover_overlay_icon_color'] ) && '' !== $this->shortcode_atts['hover_overlay_icon_color'] ) {
+		if ( isset( $this->props['hover_overlay_icon_color'] ) && '' !== $this->props['hover_overlay_icon_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .et_pb_extra_overlay:before',
 				'declaration' => sprintf(
 					'color: %1$s;',
-					esc_html( $this->shortcode_atts['hover_overlay_icon_color'] )
+					esc_html( $this->props['hover_overlay_icon_color'] )
 				),
 			) );
 		}
 
 		// Overwrite border_color_top attribute if border color is defined by advanced design settings
-		if ( isset( $this->shortcode_atts['border_color'] ) && isset( $this->shortcode_atts['use_border_color'] ) && 'on' === $this->shortcode_atts['use_border_color'] ) {
-			$this->shortcode_atts['border_top_color'] = $this->shortcode_atts['border_color'];
+		if ( isset( $this->props['border_color'] ) && isset( $this->props['use_border_color'] ) && 'on' === $this->props['use_border_color'] ) {
+			$this->props['border_top_color'] = $this->props['border_color'];
 		}
 
-		if ( is_customize_preview() && $this->shortcode_atts['term_color'] === extra_global_accent_color() ) {
-			$this->shortcode_atts['module_class'] = $this->shortcode_atts['module_class'] . ' no-term-color-module';
+		if ( is_customize_preview() && $this->props['term_color'] === extra_global_accent_color() ) {
+			$this->props['module_class'] = $this->props['module_class'] . ' no-term-color-module';
 		}
 
-		if ( isset( $this->shortcode_atts['module_posts']->found_posts ) && 0 < $this->shortcode_atts['module_posts']->found_posts ) {
-			$post_ids = wp_list_pluck( $this->shortcode_atts['module_posts']->posts, 'ID' );
+		if ( isset( $this->props['module_posts']->found_posts ) && 0 < $this->props['module_posts']->found_posts ) {
+			$post_ids = wp_list_pluck( $this->props['module_posts']->posts, 'ID' );
 
 			$extra_displayed_post_ids = array_unique( array_merge( $extra_displayed_post_ids, $post_ids ) );
 		}
@@ -815,8 +783,8 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 	}
 
 	function _process_shortcode_atts_category_id() {
-		if ( false !== strpos( $this->shortcode_atts['category_id'], '-1' ) ) {
-			$this->shortcode_atts['use_tax_query'] = true;
+		if ( false !== strpos( $this->props['category_id'], '-1' ) ) {
+			$this->props['use_tax_query'] = true;
 
 			if ( is_category() ) {
 				$current_categoory = get_queried_object_id();
@@ -824,16 +792,16 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 				$current_categoory = '';
 			}
 
-			if ( '-1' == $this->shortcode_atts['category_id'] ) {
-				$this->shortcode_atts['category_id'] = $current_categoory;
+			if ( '-1' == $this->props['category_id'] ) {
+				$this->props['category_id'] = $current_categoory;
 			} else {
 				$replace = empty( $current_categoory ) ? '-1,' : '-1';
-				$this->shortcode_atts['category_id'] = str_ireplace( $replace, $current_categoory, $this->shortcode_atts['category_id'] );
+				$this->props['category_id'] = str_ireplace( $replace, $current_categoory, $this->props['category_id'] );
 			}
 		}
 
-		if ( '0' == substr( $this->shortcode_atts['category_id'], 0, 1 ) ) {
-			$this->shortcode_atts['category_id'] = 0;
+		if ( '0' == substr( $this->props['category_id'], 0, 1 ) ) {
+			$this->props['category_id'] = 0;
 		}
 	}
 
@@ -842,8 +810,8 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 
 		$this->_process_shortcode_atts_category_id();
 
-		if ( !empty( $this->shortcode_atts['category_id'] ) ) {
-			$categories = array_map( 'absint', explode( ',', $this->shortcode_atts['category_id'] ) );
+		if ( !empty( $this->props['category_id'] ) ) {
+			$categories = array_map( 'absint', explode( ',', $this->props['category_id'] ) );
 
 			$args['ignore_sticky_posts'] = 1;
 
@@ -862,25 +830,25 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 					$terms_names[] = get_term( $category_id, 'category' )->name;
 				}
 				$terms_names = implode( ', ', $terms_names );
-				$this->shortcode_atts['terms_names'] = $terms_names;
+				$this->props['terms_names'] = $terms_names;
 			}
 
 			$term = get_term( $categories[0], 'category' );
-			if ( !empty( $term ) ) {
-				$this->shortcode_atts['term_name'] = $term->name;
-				$this->shortcode_atts['term_color'] = extra_get_category_color( $term->term_id );
+			if ( !empty( $term ) && empty( $term->errors ) ) {
+				$this->props['term_name'] = $term->name;
+				$this->props['term_color'] = extra_get_category_color( $term->term_id );
 			} else {
 				unset( $args['tax_query'] );
 			}
 		}
 
-		if ( isset( $wp_query->tax_query->queries ) && $this->shortcode_atts['use_tax_query'] ) {
+		if ( isset( $wp_query->tax_query->queries ) && $this->props['use_tax_query'] ) {
 			wp_localize_script( 'extra-scripts', 'EXTRA_TAX_QUERY', $wp_query->tax_query->queries );
 
 			$taxonomies = $wp_query->tax_query->queries;
 
 			foreach ( $taxonomies as $taxonomy ) {
-				if ( isset( $taxonomy['taxonomy'] ) && 'category' === $taxonomy['taxonomy'] && ! empty( $this->shortcode_atts['category_id'] ) ) {
+				if ( isset( $taxonomy['taxonomy'] ) && 'category' === $taxonomy['taxonomy'] && ! empty( $this->props['category_id'] ) ) {
 					continue;
 				}
 
@@ -896,7 +864,7 @@ class ET_Builder_Module_Posts extends ET_Builder_Module {
 			}
 		}
 
-		if ( $this->shortcode_atts['display_featured_posts_only'] ) {
+		if ( $this->props['display_featured_posts_only'] ) {
 			$args['meta_query'] = array(
 				array(
 					'key'   => '_extra_featured_post',
@@ -924,14 +892,9 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 		$this->post_types = array( EXTRA_LAYOUT_POST_TYPE );
 		$this->child_slug = 'et_pb_tabbed_posts_tab';
 
-		$this->whitelisted_fields = array();
-		foreach ( $this->get_fields() as $name => $field ) {
-			$this->whitelisted_fields[] = $name;
-		}
-
 		$this->main_css_element = '%%order_class%%';
 
-		$this->options_toggles = array(
+		$this->settings_modal_toggles = array(
 			'general'  => array(
 				'toggles' => array(
 					'main_content' => esc_html__( 'Posts', 'et_builder' ),
@@ -952,7 +915,7 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 			),
 		);
 
-		$this->advanced_options = array(
+		$this->advanced_fields = array(
 			'fonts'                 => array(
 				'tab'        => array(
 					'label'          => esc_html__( 'Tab', 'et_builder' ),
@@ -1045,7 +1008,7 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 			'custom_margin_padding' => array(),
 		);
 
-		$this->custom_css_options = array(
+		$this->custom_css_fields = array(
 			'tab'                    => array(
 				'label'    => esc_html__( 'Tab', 'et_builder' ),
 				'selector' => '.tabs',
@@ -1136,7 +1099,7 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 		$fields = array(
 			'posts_per_page'  => array(
 				'label'           => esc_html__( 'Posts Limit', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'description'     => esc_html__( 'The number of posts shown.', 'extra' ),
 				'priority'        => 3,
 				'option_category' => 'configuration',
@@ -1209,7 +1172,7 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 					'on'  => esc_html__( 'Yes', 'extra' ),
 					'off' => esc_html__( 'No', 'extra' ),
 				),
-				'affects'         => array( '#et_pb_date_format' ),
+				'affects'         => array( 'date_format' ),
 				'description'     => esc_html__( "Turn the dispay of each post's date on or off.", 'extra' ),
 				'priority'        => 5,
 				'option_category' => 'configuration',
@@ -1217,7 +1180,7 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 			),
 			'date_format'     => array(
 				'label'               => esc_html__( 'Date Format', 'extra' ),
-				'type'                => 'input',
+				'type'                => 'text',
 				'depends_show_if_not' => "off",
 				'description'         => esc_html__( 'The format for the date display in PHP date() format', 'extra' ),
 				'option_category'     => 'configuration',
@@ -1295,10 +1258,9 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 			),
 			'hover_overlay_icon'            => array(
 				'label'               => esc_html__( 'Hover Overlay Icon Picker', 'et_builder' ),
-				'type'                => 'text',
+				'type'                => 'select_icon',
 				'option_category'     => 'configuration',
 				'class'               => array( 'et-pb-font-icon' ),
-				'renderer'            => 'et_pb_get_font_icon_list',
 				'renderer_with_field' => true,
 				'tab_slug'            => 'advanced',
 				'toggle_slug'         => 'overlay',
@@ -1346,7 +1308,7 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 		return esc_html__( 'Add New Tab', 'extra' );
 	}
 
-	function pre_shortcode_content() {
+	function before_render() {
 		$global_shortcode_atts = array(
 			'posts_per_page',
 			'show_thumbnails',
@@ -1364,45 +1326,45 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 		$this->shortcode_atts();
 
 		foreach ( $global_shortcode_atts as $att ) {
-			self::$global_shortcode_atts[$att] = $this->shortcode_atts[ $att ];
+			self::$global_shortcode_atts[$att] = $this->props[ $att ];
 		}
 
-		if ( isset( $this->shortcode_atts['active_tab_text_color'] ) && '' !== $this->shortcode_atts['active_tab_text_color'] ) {
+		if ( isset( $this->props['active_tab_text_color'] ) && '' !== $this->props['active_tab_text_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .tabs ul li.active',
 				'declaration' => sprintf(
 					'color: %1$s !important;',
-					esc_html( $this->shortcode_atts['active_tab_text_color'] )
+					esc_html( $this->props['active_tab_text_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['active_tab_background_color'] ) && '' !== $this->shortcode_atts['active_tab_background_color'] ) {
+		if ( isset( $this->props['active_tab_background_color'] ) && '' !== $this->props['active_tab_background_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .tabs ul li.active',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['active_tab_background_color'] )
+					esc_html( $this->props['active_tab_background_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['inactive_tab_background_color'] ) && '' !== $this->shortcode_atts['inactive_tab_background_color'] ) {
+		if ( isset( $this->props['inactive_tab_background_color'] ) && '' !== $this->props['inactive_tab_background_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .tabs',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['inactive_tab_background_color'] )
+					esc_html( $this->props['inactive_tab_background_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['max_width'] ) && '' !== $this->shortcode_atts['max_width'] ) {
+		if ( isset( $this->props['max_width'] ) && '' !== $this->props['max_width'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%',
 				'declaration' => sprintf(
 					'max-width: %1$s;',
-					esc_html( et_builder_process_range_value( $this->shortcode_atts['max_width'] ) )
+					esc_html( et_builder_process_range_value( $this->props['max_width'] ) )
 				),
 			) );
 		}
@@ -1422,7 +1384,7 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 	function process_bool_shortcode_atts() {
 		foreach ( $this->get_fields() as $field_name => $field ) {
 			if ( 'yes_no_button' == $field['type'] ) {
-				$this->shortcode_atts[ $field_name ] = 'on' == $this->shortcode_atts[ $field_name ] ? true : false;
+				$this->props[ $field_name ] = 'on' == $this->props[ $field_name ] ? true : false;
 			}
 		}
 	}
@@ -1431,55 +1393,55 @@ class ET_Builder_Module_Tabbed_Posts extends ET_Builder_Module {
 		$this->process_bool_shortcode_atts();
 	}
 
-	function shortcode_callback( $atts, $content = null, $function_name ) {
-		$this->shortcode_atts['border_top_color'] = et_get_option( 'accent_color', '#00A8FF' );
+	function render( $atts, $content = null, $function_name ) {
+		$this->props['border_top_color'] = et_get_option( 'accent_color', '#00A8FF' );
 
-		$this->shortcode_atts['terms'] = array();
+		$this->props['terms'] = array();
 		foreach ( self::$tabs_data as $tabs_data ) {
 			$term = array(
 				'name'  => $tabs_data['term_name'],
 				'color' => $tabs_data['term_color'],
 			);
-			$this->shortcode_atts[ 'terms' ][] = $term;
+			$this->props[ 'terms' ][] = $term;
 		}
 
-		$this->shortcode_atts['module_class'] = ET_Builder_Element::add_module_order_class( $this->shortcode_atts['module_class'], $this->slug );
+		$this->props['module_class'] = ET_Builder_Element::add_module_order_class( $this->props['module_class'], $this->slug );
 
 		// Adding styling classes to module
-		if ( !empty( $this->shortcode_atts['remove_drop_shadow'] ) && 'on' === $this->shortcode_atts['remove_drop_shadow'] ) {
-			$this->shortcode_atts['module_class'] = $this->shortcode_atts['module_class'] . ' et_pb_no_drop_shadow';
+		if ( !empty( $this->props['remove_drop_shadow'] ) && 'on' === $this->props['remove_drop_shadow'] ) {
+			$this->props['module_class'] = $this->props['module_class'] . ' et_pb_no_drop_shadow';
 		}
 
 		// Print styling for general options
-		if ( isset( $this->shortcode_atts['border_radius'] ) && '' !== $this->shortcode_atts['border_radius'] ) {
+		if ( isset( $this->props['border_radius'] ) && '' !== $this->props['border_radius'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.et_pb_extra_module',
 				'declaration' => sprintf(
 					'-moz-border-radius: %1$s;
 					-webkit-border-radius: %1$s;
 					border-radius: %1$s;',
-					esc_html( $this->shortcode_atts['border_radius'] )
+					esc_html( $this->props['border_radius'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['post_format_icon_bg_color'] ) && '' !== $this->shortcode_atts['post_format_icon_bg_color'] ) {
+		if ( isset( $this->props['post_format_icon_bg_color'] ) && '' !== $this->props['post_format_icon_bg_color'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .post-thumbnail img',
 				'declaration' => sprintf(
 					'background-color: %1$s !important;',
-					esc_html( $this->shortcode_atts['post_format_icon_bg_color'] )
+					esc_html( $this->props['post_format_icon_bg_color'] )
 				),
 			) );
 		}
 
 		// Overwrite border_color_top attribute if border color is defined by advanced design settings
-		if ( isset( $this->shortcode_atts['border_color'] ) && isset( $this->shortcode_atts['use_border_color'] ) && 'on' === $this->shortcode_atts['use_border_color'] ) {
-			$this->shortcode_atts['border_top_color'] = $this->shortcode_atts['border_color'];
+		if ( isset( $this->props['border_color'] ) && isset( $this->props['use_border_color'] ) && 'on' === $this->props['use_border_color'] ) {
+			$this->props['border_top_color'] = $this->props['border_color'];
 		}
 
-		if ( is_customize_preview() && $this->shortcode_atts['border_top_color'] === extra_global_accent_color() ) {
-			$this->shortcode_atts['module_class'] = $this->shortcode_atts['module_class'] . ' no-term-color-module';
+		if ( is_customize_preview() && $this->props['border_top_color'] === extra_global_accent_color() ) {
+			$this->props['module_class'] = $this->props['module_class'] . ' no-term-color-module';
 		}
 
 		self::$tabs_data = array(); // reset
@@ -1518,22 +1480,12 @@ class ET_Builder_Module_Tabbed_Posts_Tab extends ET_Builder_Module_Posts {
 		$this->post_types = array( EXTRA_LAYOUT_POST_TYPE );
 		$this->child_title_var = 'category_name';
 
-		$this->whitelisted_fields = array(
-			'category_id',
-			'display_featured_posts_only',
-		);
-
 		$this->advanced_setting_title_text = esc_html__( 'New Tab', 'extra' );
 		$this->settings_text               = esc_html__( 'Tab Settings', 'extra' );
 
-		$this->whitelisted_fields = array();
-		foreach ( $this->get_fields() as $name => $field ) {
-			$this->whitelisted_fields[] = $name;
-		}
+		$this->settings_modal_toggles = parent::get_options_toggles();
 
-		$this->options_toggles = parent::get_options_toggles();
-
-		$this->custom_css_options = array(
+		$this->custom_css_fields = array(
 			'main_post'              => array(
 				'label'    => esc_html__( 'Main Post Area', 'et_builder' ),
 				'selector' => '.main-post',
@@ -1597,12 +1549,10 @@ class ET_Builder_Module_Tabbed_Posts_Tab extends ET_Builder_Module_Posts {
 		$fields = array(
 			'category_id'                 => array(
 				'label'           => esc_html__( 'Category', 'extra' ),
-				'type'            => 'custom',
+				'type'            => 'select',
 				'description'     => esc_html__( 'Choose a category.', 'extra' ),
-				'renderer'        => array(
-					$this,
-					'category_field_renderer',
-				),
+				'options'         => $this->get_categories_list(),
+				'default'         => '-1',
 				'option_category' => 'configuration',
 				'toggle_slug'     => 'main_content',
 			),
@@ -1637,50 +1587,49 @@ class ET_Builder_Module_Tabbed_Posts_Tab extends ET_Builder_Module_Posts {
 		return $fields;
 	}
 
-	function category_field_renderer( $field ) {
-		if ( !class_exists( 'Extra_Walker_CategoryDropdown' ) ) {
-			init_extra_walker_categorydropdown();
-		}
-		$dropdown_args = array(
-			'echo'            => 0,
-			'name'            => $this->get_field_name( $field ),
-			'hierarchical'    => 1,
-			'show_option_all' => esc_html__( 'All', 'extra' ),
-			'walker'          => new Extra_Walker_CategoryDropdown,
-		);
-		$output = wp_dropdown_categories( $dropdown_args );
+	function get_categories_list() {
+		$cats_array = get_categories( 'hide_empty=0' );
+		$output = array( '-1' => esc_html__( 'All', 'extra' ) );
 
+		if ( ! empty( $cats_array ) ) {
+			foreach( $cats_array as $category ) {
+				$id_string = (string) $category->term_id;
+				$output[$id_string] = $category->name;
+			}
+		}
+		
 		return $output;
 	}
 
-	function shortcode_callback( $atts, $content = null, $function_name ) {
+	function render( $atts, $content = null, $function_name ) {
 		$this->_process_shortcode_atts_category_id();
 
-		if ( !empty( $this->shortcode_atts['category_id'] ) ) {
-			$categories = array_map( 'absint', explode( ',', $this->shortcode_atts['category_id'] ) );
+		if ( !empty( $this->props['category_id'] ) ) {
+			$categories = array_map( 'absint', explode( ',', $this->props['category_id'] ) );
 
 			$term = get_term( absint( $categories[0] ), 'category' );
-			if ( !empty( $term ) ) {
-				$this->shortcode_atts['term_name'] = $term->name;
-				$this->shortcode_atts['term_color'] = extra_get_category_color( $term->term_id );
+
+			if ( !empty( $term ) && empty( $term->errors ) ) {
+				$this->props['term_name'] = $term->name;
+				$this->props['term_color'] = extra_get_category_color( $term->term_id );
 			}
 		}
 
-		if ( empty( $term ) ) {
-			$this->shortcode_atts['term_name'] = esc_html__( 'All', 'extra' );
-			$this->shortcode_atts['term_color'] = et_builder_accent_color();
+		if ( empty( $term ) || ! empty( $term->errors ) ) {
+			$this->props['term_name'] = esc_html__( 'All', 'extra' );
+			$this->props['term_color'] = et_builder_accent_color();
 		}
 
-		$this->shortcode_atts['module_class'] = ET_Builder_Element::add_module_order_class( '', $this->slug );
+		$this->props['module_class'] = ET_Builder_Element::add_module_order_class( '', $this->slug );
 
-		$this->shortcode_atts['tab_id'] = ET_Builder_Module_Tabbed_Posts::add_child_data( $this->shortcode_atts );
+		$this->props['tab_id'] = ET_Builder_Module_Tabbed_Posts::add_child_data( $this->props );
 
-		$this->shortcode_atts['order'] = 'desc';
-		$this->shortcode_atts['orderby'] = 'date';
+		$this->props['order'] = 'desc';
+		$this->props['orderby'] = 'date';
 
-		$this->shortcode_atts = array_merge( $this->shortcode_atts, ET_Builder_Module_Tabbed_Posts::get_global_shortcode_atts() );
+		$this->props = array_merge( $this->props, ET_Builder_Module_Tabbed_Posts::get_global_shortcode_atts() );
 
-		return parent::shortcode_callback( $atts, $content, $function_name );
+		return parent::render( $atts, $content, $function_name );
 	}
 
 }
@@ -1694,16 +1643,11 @@ class ET_Builder_Module_Posts_Carousel extends ET_Builder_Module_Posts {
 		$this->slug = 'et_pb_posts_carousel';
 		$this->post_types = array( EXTRA_LAYOUT_POST_TYPE );
 
-		$this->whitelisted_fields = array();
-		foreach ( $this->get_fields() as $name => $field ) {
-			$this->whitelisted_fields[] = $name;
-		}
-
 		$this->main_css_element = '%%order_class%%';
 
-		$this->options_toggles = $this->get_options_toggles();
+		$this->settings_modal_toggles = $this->get_options_toggles();
 
-		$this->advanced_options = array(
+		$this->advanced_fields = array(
 			'fonts'                 => array(
 				'header'    => $this->set_frequent_advanced_options( 'header' ),
 				'subheader' => $this->set_frequent_advanced_options( 'subheader' ),
@@ -1745,7 +1689,7 @@ class ET_Builder_Module_Posts_Carousel extends ET_Builder_Module_Posts {
 			'custom_margin_padding' => array(),
 		);
 
-		$this->custom_css_options = array(
+		$this->custom_css_fields = array(
 			'head'              => array(
 				'label'    => esc_html__( 'Module Head', 'et_builder' ),
 				'selector' => '.module-head',
@@ -1827,7 +1771,7 @@ class ET_Builder_Module_Posts_Carousel extends ET_Builder_Module_Posts {
 					'off' => esc_html__( 'No', 'extra' ),
 					'on'  => esc_html__( 'Yes', 'extra' ),
 				),
-				'affects'         => array( '#et_pb_autoplay_speed' ),
+				'affects'         => array( 'autoplay_speed' ),
 				'description'     => esc_html__( 'Turn the autoplay feature on or off.', 'extra' ),
 				'priority'        => 6,
 				'option_category' => 'configuration',
@@ -1836,7 +1780,7 @@ class ET_Builder_Module_Posts_Carousel extends ET_Builder_Module_Posts {
 			),
 			'autoplay_speed'     => array(
 				'label'           => esc_html__( 'Autoplay Speed', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'depends_show_if' => "on",
 				'description'     => esc_html__( 'The speed, in seconds, in which it will auto rotate to the next slide.', 'extra' ),
 				'priority'        => 6,
@@ -1846,7 +1790,7 @@ class ET_Builder_Module_Posts_Carousel extends ET_Builder_Module_Posts {
 			),
 			'max_title_characters'=> array(
 				'label'           => esc_html__( 'Max. Title Characters', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'description'     => esc_html__( 'Length of the title need to be limited to prevent inappropriate caption height in narrow column', 'extra' ),
 				'option_category' => 'configuration',
 				'toggle_slug'     => 'main_content',
@@ -1887,23 +1831,23 @@ class ET_Builder_Module_Posts_Carousel extends ET_Builder_Module_Posts {
 		return $fields;
 	}
 
-	function pre_shortcode_content() {
-		if ( isset( $this->shortcode_atts['nav_arrow_color'] ) && '' !== $this->shortcode_atts['nav_arrow_color'] ) {
+	function before_render() {
+		if ( isset( $this->props['nav_arrow_color'] ) && '' !== $this->props['nav_arrow_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .et-pb-slider-arrows a:before',
 				'declaration' => sprintf(
 					'color: %1$s;',
-					esc_html( $this->shortcode_atts['nav_arrow_color'] )
+					esc_html( $this->props['nav_arrow_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['nav_arrow_bg_color'] ) && '' !== $this->shortcode_atts['nav_arrow_bg_color'] ) {
+		if ( isset( $this->props['nav_arrow_bg_color'] ) && '' !== $this->props['nav_arrow_bg_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .et-pb-slider-arrows a',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['nav_arrow_bg_color'] )
+					esc_html( $this->props['nav_arrow_bg_color'] )
 				),
 			) );
 		}
@@ -1933,7 +1877,7 @@ class ET_Builder_Module_Posts_Carousel extends ET_Builder_Module_Posts {
 
 		$args['meta_query'][] = $thumbnail_meta_query;
 
-		$args['posts_per_page'] = !empty( $this->shortcode_atts['posts_per_page'] ) && is_numeric( $this->shortcode_atts['posts_per_page'] ) ? $this->shortcode_atts['posts_per_page'] : -1;
+		$args['posts_per_page'] = !empty( $this->props['posts_per_page'] ) && is_numeric( $this->props['posts_per_page'] ) ? $this->props['posts_per_page'] : -1;
 
 		return $args;
 	}
@@ -1961,17 +1905,12 @@ class ET_Builder_Module_Featured_Posts_Slider extends ET_Builder_Module_Posts_Ca
 		$this->slug = 'et_pb_featured_posts_slider';
 		$this->post_types = array( EXTRA_LAYOUT_POST_TYPE );
 
-		$this->whitelisted_fields = array();
-		foreach ( $this->get_fields() as $name => $field ) {
-			$this->whitelisted_fields[] = $name;
-		}
-
 		$this->main_css_element = '%%order_class%%';
 
-		$this->options_toggles = parent::get_options_toggles();
-		$this->options_toggles['advanced']['toggles']['caption'] = esc_html__( 'Caption', 'et_builder');
+		$this->settings_modal_toggles = parent::get_options_toggles();
+		$this->settings_modal_toggles['advanced']['toggles']['caption'] = esc_html__( 'Caption', 'et_builder');
 
-		$this->advanced_options = array(
+		$this->advanced_fields = array(
 			'fonts'                 => array(
 				'title' => array(
 					'label'          => esc_html__( 'Title', 'et_builder' ),
@@ -1997,7 +1936,7 @@ class ET_Builder_Module_Featured_Posts_Slider extends ET_Builder_Module_Posts_Ca
 			'custom_margin_padding' => array(),
 		);
 
-		$this->custom_css_options = array(
+		$this->custom_css_fields = array(
 			'post_hentry'            => array(
 				'label'    => esc_html__( 'Post Entry', 'et_builder' ),
 				'selector' => '.hentry',
@@ -2080,46 +2019,46 @@ class ET_Builder_Module_Featured_Posts_Slider extends ET_Builder_Module_Posts_Ca
 		return $fields;
 	}
 
-	function pre_shortcode_content() {
-		if ( isset( $this->shortcode_atts['slide_caption_background'] ) && '' !== $this->shortcode_atts['slide_caption_background'] ) {
+	function before_render() {
+		if ( isset( $this->props['slide_caption_background'] ) && '' !== $this->props['slide_caption_background'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.featured-posts-slider-module .carousel-item .post-content-box',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['slide_caption_background'] )
+					esc_html( $this->props['slide_caption_background'] )
 				),
 			) );
 		}
 
 		// Print styling for general options
-		if ( isset( $this->shortcode_atts['border_radius'] ) && '' !== $this->shortcode_atts['border_radius'] ) {
+		if ( isset( $this->props['border_radius'] ) && '' !== $this->props['border_radius'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.et_pb_extra_module .hentry',
 				'declaration' => sprintf(
 					'-moz-border-radius: %1$s;
 					-webkit-border-radius: %1$s;
 					border-radius: %1$s;',
-					esc_html( $this->shortcode_atts['border_radius'] )
+					esc_html( $this->props['border_radius'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['nav_arrow_color'] ) && '' !== $this->shortcode_atts['nav_arrow_color'] ) {
+		if ( isset( $this->props['nav_arrow_color'] ) && '' !== $this->props['nav_arrow_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .et-pb-slider-arrows .et-pb-arrow-prev:before, %%order_class%% .et-pb-slider-arrows .et-pb-arrow-next:before',
 				'declaration' => sprintf(
 					'color: %1$s;',
-					esc_html( $this->shortcode_atts['nav_arrow_color'] )
+					esc_html( $this->props['nav_arrow_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['nav_arrow_bg_color'] ) && '' !== $this->shortcode_atts['nav_arrow_bg_color'] ) {
+		if ( isset( $this->props['nav_arrow_bg_color'] ) && '' !== $this->props['nav_arrow_bg_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .et-pb-slider-arrows .et-pb-arrow-prev, %%order_class%% .et-pb-slider-arrows .et-pb-arrow-next',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['nav_arrow_bg_color'] )
+					esc_html( $this->props['nav_arrow_bg_color'] )
 				),
 			) );
 		}
@@ -2138,7 +2077,7 @@ class ET_Builder_Module_Featured_Posts_Slider extends ET_Builder_Module_Posts_Ca
 	function _pre_wp_query( $args ) {
 		$args = parent::_pre_wp_query( $args );
 
-		$args['posts_per_page'] = !empty( $this->shortcode_atts['posts_per_page'] ) && is_numeric( $this->shortcode_atts['posts_per_page'] ) ? $this->shortcode_atts['posts_per_page'] : 6;
+		$args['posts_per_page'] = !empty( $this->props['posts_per_page'] ) && is_numeric( $this->props['posts_per_page'] ) ? $this->props['posts_per_page'] : 6;
 
 		return $args;
 	}
@@ -2154,16 +2093,11 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 		$this->slug = 'et_pb_posts_blog_feed_standard';
 		$this->post_types = array( EXTRA_LAYOUT_POST_TYPE );
 
-		$this->whitelisted_fields = array();
-		foreach ( $this->get_fields() as $name => $field ) {
-			$this->whitelisted_fields[] = $name;
-		}
-
 		$this->main_css_element = '%%order_class%%';
 
-		$this->options_toggles = $this->get_options_toggles();
+		$this->settings_modal_toggles = $this->get_options_toggles();
 
-		$this->advanced_options = array(
+		$this->advanced_fields = array(
 			'fonts'                 => array(
 				'header' => $this->set_frequent_advanced_options( 'header' ),
 				'title'  => array(
@@ -2212,7 +2146,7 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 			'custom_margin_padding' => array(),
 		);
 
-		$this->custom_css_options = array(
+		$this->custom_css_fields = array(
 			'head'                               => array(
 				'label'    => esc_html__( 'Module Head', 'et_builder' ),
 				'selector' => '.module-head',
@@ -2327,7 +2261,7 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 		$new_fields = array(
 			'feed_title'                 => array(
 				'label'           => esc_html__( 'Blog Feed Title', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'description'     => esc_html__( 'This is an optional title to display for this module.', 'extra' ),
 				'priority'        => 2,
 				'option_category' => 'configuration',
@@ -2335,7 +2269,7 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 			),
 			'posts_per_page'             => array(
 				'label'           => esc_html__( 'Posts Per Page', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'description'     => esc_html__( 'The number of posts shown per page.', 'extra' ),
 				'priority'        => 3,
 				'option_category' => 'configuration',
@@ -2397,7 +2331,7 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 					'full'    => esc_html__( "Show Full Content", 'extra' ),
 				),
 				'affects'         => array(
-					'#et_pb_show_more',
+					'show_more',
 				),
 				'description'     => esc_html__( "Display the post's exceprt or full content. If full content, then it will truncate to the more tag if used.", 'extra' ),
 				'option_category' => 'configuration',
@@ -2422,7 +2356,7 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 					'on'  => esc_html__( 'Yes', 'extra' ),
 					'off' => esc_html__( 'No', 'extra' ),
 				),
-				'affects'         => array( '#et_pb_date_format' ),
+				'affects'         => array( 'date_format' ),
 				'description'     => esc_html__( "Turn the dispay of each post's date on or off.", 'extra' ),
 				'priority'        => 5,
 				'option_category' => 'configuration',
@@ -2430,7 +2364,7 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 			),
 			'date_format'                => array(
 				'label'               => esc_html__( 'Date Format', 'extra' ),
-				'type'                => 'input',
+				'type'                => 'text',
 				'depends_show_if_not' => "off",
 				'description'         => esc_html__( 'The format for the date display in PHP date() format', 'extra' ),
 				'option_category'     => 'configuration',
@@ -2496,11 +2430,11 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 
 		$this->enqueue_scripts();
 
-		$this->shortcode_atts['_et_column_type'] = $et_column_type;
-		$this->shortcode_atts['blog_feed_module_type'] = 'standard';
+		$this->props['_et_column_type'] = $et_column_type;
+		$this->props['blog_feed_module_type'] = 'standard';
 
-		if ( '' === $this->shortcode_atts['posts_per_page'] ) {
-			$this->shortcode_atts['posts_per_page'] = 5;
+		if ( '' === $this->props['posts_per_page'] ) {
+			$this->props['posts_per_page'] = 5;
 		}
 	}
 
@@ -2512,53 +2446,53 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 		return $options_toggles;
 	}
 
-	function pre_shortcode_content() {
-		if ( isset( $this->shortcode_atts['read_more_background'] ) && '' !== $this->shortcode_atts['read_more_background'] ) {
+	function before_render() {
+		if ( isset( $this->props['read_more_background'] ) && '' !== $this->props['read_more_background'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%% .read-more-button',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['read_more_background'] )
+					esc_html( $this->props['read_more_background'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['pagination_color'] ) && '' !== $this->shortcode_atts['pagination_color'] ) {
+		if ( isset( $this->props['pagination_color'] ) && '' !== $this->props['pagination_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.paginated .pagination li, %%order_class%%.paginated .pagination li a, %%order_class%%.paginated .pagination li a:before',
 				'declaration' => sprintf(
 					'color: %1$s;',
-					esc_html( $this->shortcode_atts['pagination_color'] )
+					esc_html( $this->props['pagination_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['pagination_bg_color'] ) && '' !== $this->shortcode_atts['pagination_bg_color'] ) {
+		if ( isset( $this->props['pagination_bg_color'] ) && '' !== $this->props['pagination_bg_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.paginated .pagination li, %%order_class%%.paginated .pagination li a',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['pagination_bg_color'] )
+					esc_html( $this->props['pagination_bg_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['pagination_active_color'] ) && '' !== $this->shortcode_atts['pagination_active_color'] ) {
+		if ( isset( $this->props['pagination_active_color'] ) && '' !== $this->props['pagination_active_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.paginated .pagination li.active a',
 				'declaration' => sprintf(
 					'color: %1$s;',
-					esc_html( $this->shortcode_atts['pagination_active_color'] )
+					esc_html( $this->props['pagination_active_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['pagination_active_bg_color'] ) && '' !== $this->shortcode_atts['pagination_active_bg_color'] ) {
+		if ( isset( $this->props['pagination_active_bg_color'] ) && '' !== $this->props['pagination_active_bg_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.paginated .pagination li.active a',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['pagination_active_bg_color'] )
+					esc_html( $this->props['pagination_active_bg_color'] )
 				),
 			) );
 		}
@@ -2567,7 +2501,7 @@ class ET_Builder_Module_Posts_Blog_Feed extends ET_Builder_Module_Posts {
 	function _pre_wp_query( $args ) {
 		$args = parent::_pre_wp_query( $args );
 
-		$args['posts_per_page'] = is_numeric( $this->shortcode_atts['posts_per_page'] ) ? $this->shortcode_atts['posts_per_page'] : 5;
+		$args['posts_per_page'] = is_numeric( $this->props['posts_per_page'] ) ? $this->props['posts_per_page'] : 5;
 
 		return $args;
 	}
@@ -2583,17 +2517,12 @@ class ET_Builder_Module_Posts_Blog_Feed_Masonry extends ET_Builder_Module_Posts_
 		$this->slug = 'et_pb_posts_blog_feed_masonry';
 		$this->post_types = array( EXTRA_LAYOUT_POST_TYPE );
 
-		$this->whitelisted_fields = array();
-		foreach ( $this->get_fields() as $name => $field ) {
-			$this->whitelisted_fields[] = $name;
-		}
-
 		$this->main_css_element = '%%order_class%%';
 
-		$this->options_toggles = parent::get_options_toggles();
-		$this->options_toggles['advanced']['toggles']['post'] = esc_html__( 'Post', 'et_builder');
+		$this->settings_modal_toggles = parent::get_options_toggles();
+		$this->settings_modal_toggles['advanced']['toggles']['post'] = esc_html__( 'Post', 'et_builder');
 
-		$this->advanced_options = array(
+		$this->advanced_fields = array(
 			'fonts'                 => array(
 				'title' => array(
 					'label'          => esc_html__( 'Title', 'et_builder' ),
@@ -2638,7 +2567,7 @@ class ET_Builder_Module_Posts_Blog_Feed_Masonry extends ET_Builder_Module_Posts_
 			'custom_margin_padding' => array(),
 		);
 
-		$this->custom_css_options = array(
+		$this->custom_css_fields = array(
 			'post_hentry'                        => array(
 				'label'    => esc_html__( 'Post Entry', 'et_builder' ),
 				'selector' => '.hentry',
@@ -2752,71 +2681,71 @@ class ET_Builder_Module_Posts_Blog_Feed_Masonry extends ET_Builder_Module_Posts_
 
 		$this->enqueue_scripts();
 
-		$this->shortcode_atts['_et_column_type'] = $et_column_type;
-		$this->shortcode_atts['blog_feed_module_type'] = 'masonry';
+		$this->props['_et_column_type'] = $et_column_type;
+		$this->props['blog_feed_module_type'] = 'masonry';
 	}
 
-	function pre_shortcode_content() {
+	function before_render() {
 		wp_enqueue_script( 'salvattore' );
 
-		if ( '' !== $this->shortcode_atts['border_radius'] ) {
+		if ( '' !== $this->props['border_radius'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.posts-blog-feed-module.masonry .hentry, %%order_class%%.posts-blog-feed-module.masonry .et-format-link .header div, %%order_class%%.posts-blog-feed-module.masonry .et-format-quote .header div',
 				'declaration' => sprintf(
 					'-moz-border-radius: %1$s;
 					-webkit-border-radius: %1$s;
 					border-radius: %1$s;',
-					esc_html( $this->shortcode_atts['border_radius'] )
+					esc_html( $this->props['border_radius'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['post_bg_color'] ) && '' !== $this->shortcode_atts['post_bg_color'] ) {
+		if ( isset( $this->props['post_bg_color'] ) && '' !== $this->props['post_bg_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.masonry .hentry',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['post_bg_color'] )
+					esc_html( $this->props['post_bg_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['pagination_color'] ) && '' !== $this->shortcode_atts['pagination_color'] ) {
+		if ( isset( $this->props['pagination_color'] ) && '' !== $this->props['pagination_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.paginated .pagination li, %%order_class%%.paginated .pagination li a, %%order_class%%.paginated .pagination li a:before',
 				'declaration' => sprintf(
 					'color: %1$s;',
-					esc_html( $this->shortcode_atts['pagination_color'] )
+					esc_html( $this->props['pagination_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['pagination_bg_color'] ) && '' !== $this->shortcode_atts['pagination_bg_color'] ) {
+		if ( isset( $this->props['pagination_bg_color'] ) && '' !== $this->props['pagination_bg_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.paginated .pagination li, %%order_class%%.paginated .pagination li a',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['pagination_bg_color'] )
+					esc_html( $this->props['pagination_bg_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['pagination_active_color'] ) && '' !== $this->shortcode_atts['pagination_active_color'] ) {
+		if ( isset( $this->props['pagination_active_color'] ) && '' !== $this->props['pagination_active_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.paginated .pagination li.active a',
 				'declaration' => sprintf(
 					'color: %1$s;',
-					esc_html( $this->shortcode_atts['pagination_active_color'] )
+					esc_html( $this->props['pagination_active_color'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['pagination_active_bg_color'] ) && '' !== $this->shortcode_atts['pagination_active_bg_color'] ) {
+		if ( isset( $this->props['pagination_active_bg_color'] ) && '' !== $this->props['pagination_active_bg_color'] ) {
 			ET_Builder_Element::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.paginated .pagination li.active a',
 				'declaration' => sprintf(
 					'background-color: %1$s;',
-					esc_html( $this->shortcode_atts['pagination_active_bg_color'] )
+					esc_html( $this->props['pagination_active_bg_color'] )
 				),
 			) );
 		}
@@ -2836,14 +2765,9 @@ class ET_Builder_Module_Ads extends ET_Builder_Module {
 		$this->post_types = array( EXTRA_LAYOUT_POST_TYPE );
 		$this->child_slug = 'et_pb_ads_ad';
 
-		$this->whitelisted_fields = array();
-		foreach ( $this->get_fields() as $name => $field ) {
-			$this->whitelisted_fields[] = $name;
-		}
-
 		$this->main_css_element = '%%order_class%%';
 
-		$this->options_toggles = array(
+		$this->settings_modal_toggles = array(
 			'general'  => array(
 				'toggles' => array(
 					'main_content' => esc_html__( 'Text', 'et_builder' ),
@@ -2864,7 +2788,7 @@ class ET_Builder_Module_Ads extends ET_Builder_Module {
 			),
 		);
 
-		$this->advanced_options = array(
+		$this->advanced_fields = array(
 			'fonts'                 => array(
 				'header' => array(
 					'label'          => esc_html__( 'Header', 'et_builder' ),
@@ -2892,7 +2816,7 @@ class ET_Builder_Module_Ads extends ET_Builder_Module {
 			'custom_margin_padding' => array(),
 		);
 
-		$this->custom_css_options = array(
+		$this->custom_css_fields = array(
 			'ad_link'  => array(
 				'label'    => esc_html__( 'Ad Link', 'et_builder' ),
 				'selector' => 'a',
@@ -2950,8 +2874,8 @@ class ET_Builder_Module_Ads extends ET_Builder_Module {
 
 	function get_border_style_output() {
 		$style = '';
-		if ( 'none' !== $this->shortcode_atts['border'] ) {
-			switch ( $this->shortcode_atts['border'] ) {
+		if ( 'none' !== $this->props['border'] ) {
+			switch ( $this->props['border'] ) {
 				case 'full':
 					$border = 'solid solid solid solid';
 					break;
@@ -2983,8 +2907,8 @@ class ET_Builder_Module_Ads extends ET_Builder_Module {
 				esc_attr( $border )
 			);
 
-			if ( '' !== $this->shortcode_atts['border_color'] ) {
-				$color_rgba = $this->shortcode_atts['border_color'];
+			if ( '' !== $this->props['border_color'] ) {
+				$color_rgba = $this->props['border_color'];
 				$style .= sprintf( 'border-color:%s;',
 					esc_attr( $color_rgba )
 				);
@@ -3018,7 +2942,7 @@ class ET_Builder_Module_Ads extends ET_Builder_Module {
 					'off' => esc_html__( 'No', 'extra' ),
 					'on'  => esc_html__( 'Yes', 'extra' ),
 				),
-				'affects'         => array( '#et_pb_border_color' ),
+				'affects'         => array( 'border_color' ),
 				'description'     => esc_html__( 'This will add a border to the top side of the module.', 'extra' ),
 				'option_category' => 'configuration',
 				'tab_slug'        => 'advanced',
@@ -3106,7 +3030,7 @@ class ET_Builder_Module_Ads extends ET_Builder_Module {
 	function process_bool_shortcode_atts() {
 		foreach ( $this->get_fields() as $field_name => $field ) {
 			if ( 'yes_no_button' == $field['type'] ) {
-				$this->shortcode_atts[ $field_name ] = 'on' == $this->shortcode_atts[ $field_name ] ? true : false;
+				$this->props[ $field_name ] = 'on' == $this->props[ $field_name ] ? true : false;
 			}
 		}
 	}
@@ -3115,47 +3039,47 @@ class ET_Builder_Module_Ads extends ET_Builder_Module {
 		$this->process_bool_shortcode_atts();
 	}
 
-	function shortcode_callback( $atts, $content = null, $function_name ) {
-		$this->shortcode_atts['ads'] = self::$ads_data;
+	function render( $atts, $content = null, $function_name ) {
+		$this->props['ads'] = self::$ads_data;
 		self::$ads_data = array(); // reset
 
 		$border_style = $this->get_border_style_output();
 		if ( !empty( $border_style ) ) {
-			$this->shortcode_atts['border_style'] = $border_style;
-			$this->shortcode_atts['border_class'] = 'bordered';
+			$this->props['border_style'] = $border_style;
+			$this->props['border_class'] = 'bordered';
 		} else {
-			$this->shortcode_atts['border_style'] = '';
-			$this->shortcode_atts['border_class'] = '';
+			$this->props['border_style'] = '';
+			$this->props['border_class'] = '';
 		}
 
-		$this->shortcode_atts['header_text_color'] = $this->shortcode_atts['header_text_color'];
+		$this->props['header_text_color'] = $this->props['header_text_color'];
 
-		$this->shortcode_atts['module_class'] = ET_Builder_Element::add_module_order_class( $this->shortcode_atts['module_class'], $this->slug );
+		$this->props['module_class'] = ET_Builder_Element::add_module_order_class( $this->props['module_class'], $this->slug );
 
 		// Adding styling classes to module
-		if ( !empty( $this->shortcode_atts['remove_drop_shadow'] ) && 'on' === $this->shortcode_atts['remove_drop_shadow'] ) {
-			$this->shortcode_atts['module_class'] = $this->shortcode_atts['module_class'] . ' et_pb_no_drop_shadow';
+		if ( !empty( $this->props['remove_drop_shadow'] ) && 'on' === $this->props['remove_drop_shadow'] ) {
+			$this->props['module_class'] = $this->props['module_class'] . ' et_pb_no_drop_shadow';
 		}
 
 		// Print styling for general options
-		if ( isset( $this->shortcode_atts['border_radius'] ) && '' !== $this->shortcode_atts['border_radius'] ) {
+		if ( isset( $this->props['border_radius'] ) && '' !== $this->props['border_radius'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%.et_pb_extra_module',
 				'declaration' => sprintf(
 					'-moz-border-radius: %1$s;
 					-webkit-border-radius: %1$s;
 					border-radius: %1$s;',
-					esc_html( $this->shortcode_atts['border_radius'] )
+					esc_html( $this->props['border_radius'] )
 				),
 			) );
 		}
 
-		if ( isset( $this->shortcode_atts['max_width'] ) && '' !== $this->shortcode_atts['max_width'] ) {
+		if ( isset( $this->props['max_width'] ) && '' !== $this->props['max_width'] ) {
 			ET_Builder_Module::set_style( $this->slug, array(
 				'selector'    => '%%order_class%%',
 				'declaration' => sprintf(
 					'max-width: %1$s;',
-					esc_html( et_builder_process_range_value( $this->shortcode_atts['max_width'] ) )
+					esc_html( et_builder_process_range_value( $this->props['max_width'] ) )
 				),
 			) );
 		}
@@ -3174,12 +3098,7 @@ class ET_Builder_Module_Ads_Ad extends ET_Builder_Module {
 		$this->post_types = array( EXTRA_LAYOUT_POST_TYPE );
 		$this->child_title_var = 'ad_internal_name';
 
-		$this->whitelisted_fields = array();
-		foreach ( $this->get_fields() as $name => $field ) {
-			$this->whitelisted_fields[] = $name;
-		}
-
-		$this->options_toggles = array(
+		$this->settings_modal_toggles = array(
 			'general'  => array(
 				'toggles' => array(
 					'main_content' => esc_html__( 'Text', 'et_builder' ),
@@ -3197,7 +3116,7 @@ class ET_Builder_Module_Ads_Ad extends ET_Builder_Module {
 			),
 		);
 
-		$this->custom_css_options = array(
+		$this->custom_css_fields = array(
 			'ad_link'  => array(
 				'label'    => esc_html__( 'Ad Link', 'et_builder' ),
 				'selector' => 'a',
@@ -3213,10 +3132,10 @@ class ET_Builder_Module_Ads_Ad extends ET_Builder_Module {
 		$fields = array(
 			'ad_internal_name' => array(
 				'label'       => esc_html__( 'Admin Label', 'extra' ),
-				'type'        => 'input',
+				'type'        => 'text',
 				'description' => esc_html__( 'Name displayed internally in builder for this ad', 'extra' ),
 				'toggle_slug' => 'admin_label',
-			),
+		),
 			'img_url'          => array(
 				'label'              => esc_html__( 'Image URL', 'extra' ),
 				'type'               => 'upload',
@@ -3229,7 +3148,7 @@ class ET_Builder_Module_Ads_Ad extends ET_Builder_Module {
 			),
 			'img_alt_text'         => array(
 				'label'           => esc_html__( 'Image Alt Text', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'description'     => esc_html__( 'Alternative text for image', 'extra' ),
 				'option_category' => 'basic_option',
 				'tab_slug'        => 'custom_css',
@@ -3237,7 +3156,7 @@ class ET_Builder_Module_Ads_Ad extends ET_Builder_Module {
 			),
 			'link_url'         => array(
 				'label'           => esc_html__( 'Link URL', 'extra' ),
-				'type'            => 'input',
+				'type'            => 'text',
 				'description'     => esc_html__( 'URL the ad\'s image links to.', 'extra' ),
 				'option_category' => 'basic_option',
 				'toggle_slug'     => 'link',
@@ -3253,7 +3172,7 @@ class ET_Builder_Module_Ads_Ad extends ET_Builder_Module {
 				'option_category' => 'configuration',
 				'toggle_slug'     => 'main_content',
 			),
-			'content_new'      => array(
+			'content'      => array(
 				'label'              => esc_html__( 'Ad HTML', 'extra' ),
 				'type'               => 'tiny_mce',
 				'tiny_mce_html_mode' => true,
@@ -3269,7 +3188,7 @@ class ET_Builder_Module_Ads_Ad extends ET_Builder_Module {
 	function process_bool_shortcode_atts() {
 		foreach ( $this->get_fields() as $field_name => $field ) {
 			if ( 'yes_no_button' == $field['type'] ) {
-				$this->shortcode_atts[ $field_name ] = 'on' == $this->shortcode_atts[ $field_name ] ? true : false;
+				$this->props[ $field_name ] = 'on' == $this->props[ $field_name ] ? true : false;
 			}
 		}
 	}
@@ -3278,12 +3197,12 @@ class ET_Builder_Module_Ads_Ad extends ET_Builder_Module {
 		$this->process_bool_shortcode_atts();
 	}
 
-	function shortcode_callback( $atts, $content = null, $function_name ) {
-		$this->shortcode_atts['ad_html'] = $this->shortcode_content;
+	function render( $atts, $content = null, $function_name ) {
+		$this->props['ad_html'] = $this->shortcode_content;
 
-		$this->shortcode_atts['module_class'] = ET_Builder_Element::add_module_order_class( '', $this->slug );
+		$this->props['module_class'] = ET_Builder_Element::add_module_order_class( '', $this->slug );
 
-		ET_Builder_Module_Ads::add_child_data( $this->shortcode_atts );
+		ET_Builder_Module_Ads::add_child_data( $this->props );
 	}
 
 }

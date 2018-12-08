@@ -868,3 +868,41 @@ function et_pb_extra_post_class( $classes, $class, $post_id ) {
 	return $classes;
 }
 add_filter( 'post_class', 'et_pb_extra_post_class', 10, 3 );
+
+/**
+ * Check whether current page is Extra theme (or child theme)'s category builder page
+ *
+ * @since ??
+ *
+ * @return bool
+ */
+function extra_is_category_builder_edit_screen() {
+	global $pagenow;
+
+	$utils          = ET_Core_Data_Utils::instance();
+	$is_edit_screen = in_array( $pagenow, array( 'post.php', 'post-new.php' ) );
+	$is_cpt_layout  = $is_edit_screen && ( 'layout' === get_post_type() || 'layout' === $utils->array_get( $_GET, 'post_type' ) );
+
+	return is_admin() && $is_edit_screen && $is_cpt_layout;
+}
+
+/**
+ * Hook to the proper filter(s) to disable BFB and its notification on category builder
+ *
+ * @todo possibly remove this once BFB support for Extra category builder has been added
+ *
+ * @since ??
+ *
+ * @return bool
+ */
+function extra_disable_bfb_on_category_builder( $value ) {
+	return $value ? ! extra_is_category_builder_edit_screen() : $value;
+}
+
+// Should have been hooked after et_builder_filter_bfb_enabled callback
+add_filter( 'et_builder_bfb_enabled', 'extra_disable_bfb_on_category_builder', 20 );
+
+// Should have been hooked after et_builder_filter_show_bfb_optin_modal callback
+add_filter( 'et_builder_show_bfb_optin_modal', 'extra_disable_bfb_on_category_builder', 20 );
+
+add_filter( 'et_pb_display_bfb_notification_under_bb', 'extra_disable_bfb_on_category_builder' );

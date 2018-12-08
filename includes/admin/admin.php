@@ -130,7 +130,7 @@ class Extra_Post_Format_Meta_Box extends ET_Meta_Box {
 		}
 	}
 
-	public function save( $post_id ) {
+	public function save( $post_id, $post ) {
 		if ( !empty( $_POST['et_post_format'] ) && $this->post_format == $_POST['et_post_format'] ) {
 			$this->save_fields( $post_id );
 		}
@@ -165,6 +165,12 @@ class Extra_Page_Template_Meta_Box extends ET_Meta_Box {
 		}
 	}
 
+	public function save( $post_id, $post ) {
+		if ( ( !empty( $_POST['page_template'] ) && $this->page_template == $_POST['page_template'] ) ||
+		! empty( $post ) && ! empty( $post->page_template ) && $this->page_template == $post->page_template ) {
+			$this->save_fields( $post_id );
+		}
+	}
 }
 
 class Extra_Post_Review_Meta_Box extends ET_Meta_Box {
@@ -719,12 +725,6 @@ class Extra_Authors_Page_Template_Meta_Box extends Extra_Page_Template_Meta_Box 
 		<?php
 	}
 
-	function save( $post_id ) {
-		if ( !empty( $_POST['page_template'] ) && $this->page_template == $_POST['page_template'] ) {
-			$this->save_fields( $post_id );
-		}
-	}
-
 }
 new Extra_Authors_Page_Template_Meta_Box;
 
@@ -886,12 +886,6 @@ class Extra_Blog_Feed_Page_Template_Meta_Box extends Extra_Page_Template_Meta_Bo
 				'description' => esc_html__( "Turn the display of each post's comment count on or off.", 'extra' ),
 			),
 		);
-	}
-
-	function save( $post_id ) {
-		if ( !empty( $_POST['page_template'] ) && $this->page_template == $_POST['page_template'] ) {
-			$this->save_fields( $post_id );
-		}
 	}
 
 }
@@ -1104,12 +1098,6 @@ class Extra_Sitemap_Page_Template_Meta_Box extends Extra_Page_Template_Meta_Box 
 		<?php
 	}
 
-	function save( $post_id ) {
-		if ( !empty( $_POST['page_template'] ) && $this->page_template == $_POST['page_template'] ) {
-			$this->save_fields( $post_id );
-		}
-	}
-
 }
 new Extra_Sitemap_Page_Template_Meta_Box;
 
@@ -1179,12 +1167,6 @@ class Extra_Portfolio_Page_Template_Meta_Box extends Extra_Page_Template_Meta_Bo
 		</div>
 		<br />
 		<?php
-	}
-
-	function save( $post_id ) {
-		if ( !empty( $_POST['page_template'] ) && $this->page_template == $_POST['page_template'] ) {
-			$this->save_fields( $post_id );
-		}
 	}
 
 }
@@ -1266,12 +1248,6 @@ class Extra_Contact_Page_Template_Meta_Box extends Extra_Page_Template_Meta_Box 
 		<?php
 	}
 
-	function save( $post_id ) {
-		if ( !empty( $_POST['page_template'] ) && $this->page_template == $_POST['page_template'] ) {
-			$this->save_fields( $post_id );
-		}
-	}
-
 }
 new Extra_Contact_Page_Template_Meta_Box;
 
@@ -1313,7 +1289,7 @@ class Extra_Layout_Home_Selector_Meta_Box extends ET_Meta_Box {
 		}
 	}
 
-	function save($post_id) {
+	public function save( $post_id, $post ) {
 		if ( isset( $_POST[ EXTRA_HOME_LAYOUT_META_KEY ] ) ) {
 			update_option( 'show_on_front', 'layout' );
 		} elseif ( get_post_meta( $post_id, EXTRA_HOME_LAYOUT_META_KEY, true ) ) {

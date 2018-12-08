@@ -215,6 +215,7 @@ function extra_add_image_sizes() {
 add_action( 'after_setup_theme', 'extra_add_image_sizes' );
 
 function extra_register_post_types() {
+	$utils  = ET_Core_Data_Utils::instance();
 	$labels = array(
 		'name'               => esc_html_x( 'Category Layouts', 'layout type general name', 'extra' ),
 		'singular_name'      => esc_html_x( 'Category Layout', 'layout type singular name', 'extra' ),
@@ -230,18 +231,22 @@ function extra_register_post_types() {
 		'parent_item_colon'  => '',
 	);
 
+	$get   = $_GET;
+	$is_VB = '1' === $utils->array_get( $get, 'et_fb' );
+
 	$args = array(
-		'labels'          => $labels,
-		'public'          => false,
-		'show_ui'         => true,
-		'show_in_menu'    => false,
-		'can_export'      => true,
-		'query_var'       => false,
-		'has_archive'     => false,
-		'capability_type' => 'post',
-		'hierarchical'    => false,
-		'menu_position'   => null,
-		'supports'        => array(
+		'labels'             => $labels,
+		'publicly_queryable' => $is_VB,
+		'public'             => false,
+		'show_ui'            => true,
+		'show_in_menu'       => false,
+		'can_export'         => true,
+		'query_var'          => false,
+		'has_archive'        => false,
+		'capability_type'    => 'post',
+		'hierarchical'       => false,
+		'menu_position'      => null,
+		'supports'           => array(
 			'title',
 			'editor',
 			'revisions',
