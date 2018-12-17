@@ -4,7 +4,7 @@
 /*!
 Theme Name: Extra
 Theme URI: http://www.elegantthemes.com/gallery/extra/
-Version: 2.18.3
+Version: 2.18.5
 Description: Extra
 Author: Elegant Themes
 Author URI: http://www.elegantthemes.com
@@ -13712,12 +13712,18 @@ span.comment_date {
 .et_audio_content {
   background-color: #2EA3F2;
 }
+/* Fixes for Section Dividers */
+.et-fb .section_has_divider.et_fb_element_controls_visible--child > .et_pb_top_inside_divider,
+.et-fb .section_has_divider.et_fb_element_controls_visible--child > .et_pb_bottom_inside_divider {
+  z-index: 1;
+}
 /* Containers */
 .et_pb_row {
   width: 80%;
   max-width: 1080px;
   margin: auto;
   position: relative;
+  z-index: 5;
 }
 /* Columns */
 .et_pb_column {
