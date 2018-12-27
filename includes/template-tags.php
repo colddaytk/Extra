@@ -1710,9 +1710,9 @@ function extra_display_ad( $location, $echo = true ) {
 		}
 
 		if ( $echo ) {
-			echo $output;
+			echo et_core_fix_unclosed_html_tags( $output );
 		} else {
-			return $output;
+			return et_core_fix_unclosed_html_tags( $output );
 		}
 	}
 }
