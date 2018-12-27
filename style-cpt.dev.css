@@ -4,7 +4,7 @@
 /*!
 Theme Name: Extra
 Theme URI: http://www.elegantthemes.com/gallery/extra/
-Version: 2.19
+Version: 2.19.1
 Description: Extra
 Author: Elegant Themes
 Author URI: http://www.elegantthemes.com
@@ -14484,6 +14484,8 @@ span.comment_date {
   max-width: 1080px;
   margin: auto;
   position: relative;
+}
+.section_has_divider .et-db #et-boc .et_pb_row {
   z-index: 5;
 }
 .et_pb_fullwidth_section .et-db #et-boc .et_pb_row {
@@ -14628,7 +14630,7 @@ span.comment_date {
 }
 .et-db #et-boc .et-pb-icon-circle {
   font-size: 48px;
-  border-radius: 100px;
+  border-radius: 100%;
   padding: 25px;
 }
 .et-db #et-boc .et-pb-icon-circle-border {
@@ -14684,7 +14686,6 @@ span.comment_date {
 .et-db #et-boc .et_pb_blurb_position_left .et-pb-icon-circle,
 .et-db #et-boc .et_pb_blurb_position_right .et-pb-icon-circle {
   font-size: 16px;
-  border-radius: 32px;
   padding: 8px;
 }
 .et-db #et-boc .et_pb_blurb_position_left .et-pb-icon-circle-border,
@@ -15888,12 +15889,12 @@ span.comment_date {
       -ms-flex-direction: column;
           flex-direction: column;
 }
-.et-db #et-boc .et_pb_column_4_4 > .et_pb_newsletter_layout_left_right,
-.et-db #et-boc .et_pb_column_4_4 > .et_pb_newsletter_layout_right_left,
-.et-db #et-boc .et_pb_column_3_4 > .et_pb_newsletter_layout_left_right,
-.et-db #et-boc .et_pb_column_3_4 > .et_pb_newsletter_layout_right_left,
-.et-db #et-boc .et_pb_column_2_3 > .et_pb_newsletter_layout_left_right,
-.et-db #et-boc .et_pb_column_2_3 > .et_pb_newsletter_layout_right_left {
+.et-db #et-boc .et_pb_column_4_4:not(.et_pb_column_inner) > .et_pb_newsletter_layout_left_right,
+.et-db #et-boc .et_pb_column_4_4:not(.et_pb_column_inner) > .et_pb_newsletter_layout_right_left,
+.et-db #et-boc .et_pb_column_3_4:not(.et_pb_column_inner) > .et_pb_newsletter_layout_left_right,
+.et-db #et-boc .et_pb_column_3_4:not(.et_pb_column_inner) > .et_pb_newsletter_layout_right_left,
+.et-db #et-boc .et_pb_column_2_3:not(.et_pb_column_inner) > .et_pb_newsletter_layout_left_right,
+.et-db #et-boc .et_pb_column_2_3:not(.et_pb_column_inner) > .et_pb_newsletter_layout_right_left {
   -webkit-box-orient: horizontal;
   -webkit-box-direction: normal;
       -ms-flex-direction: row;
@@ -15918,27 +15919,27 @@ span.comment_date {
   width: 100%;
   padding: 0;
 }
-.et-db #et-boc .et_pb_column_4_4 .et_pb_newsletter_form,
-.et-db #et-boc .et_pb_column_3_4 .et_pb_newsletter_form,
-.et-db #et-boc .et_pb_column_2_3 .et_pb_newsletter_form {
-  padding-left: 25px;
-}
-.et-db #et-boc .et_pb_column_4_4 > .et_pb_newsletter .et_pb_newsletter_description,
-.et-db #et-boc .et_pb_column_3_4 > .et_pb_newsletter .et_pb_newsletter_description,
-.et-db #et-boc .et_pb_column_2_3 > .et_pb_newsletter .et_pb_newsletter_description {
-  margin-bottom: 0;
-  -ms-flex-item-align: start;
-      align-self: start;
-}
-.et-db #et-boc .et_pb_column_4_4 > .et_pb_newsletter,
-.et-db #et-boc .et_pb_column_3_4 > .et_pb_newsletter,
-.et-db #et-boc .et_pb_column_2_3 > .et_pb_newsletter {
+.et-db #et-boc .et_pb_column_4_4:not(.et_pb_column_inner) > .et_pb_newsletter,
+.et-db #et-boc .et_pb_column_3_4:not(.et_pb_column_inner) > .et_pb_newsletter,
+.et-db #et-boc .et_pb_column_2_3:not(.et_pb_column_inner) > .et_pb_newsletter {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+}
+.et-db #et-boc .et_pb_column_4_4:not(.et_pb_column_inner) > .et_pb_newsletter .et_pb_newsletter_description,
+.et-db #et-boc .et_pb_column_3_4:not(.et_pb_column_inner) > .et_pb_newsletter .et_pb_newsletter_description,
+.et-db #et-boc .et_pb_column_2_3:not(.et_pb_column_inner) > .et_pb_newsletter .et_pb_newsletter_description {
+  margin-bottom: 0;
+  -ms-flex-item-align: start;
+      align-self: start;
+}
+.et-db #et-boc .et_pb_column_4_4:not(.et_pb_column_inner) > .et_pb_newsletter .et_pb_newsletter_form,
+.et-db #et-boc .et_pb_column_3_4:not(.et_pb_column_inner) > .et_pb_newsletter .et_pb_newsletter_form,
+.et-db #et-boc .et_pb_column_2_3:not(.et_pb_column_inner) > .et_pb_newsletter .et_pb_newsletter_form {
+  padding-left: 25px;
 }
 .et-db #et-boc .et_pb_tabs {
   border: 1px solid #D9D9D9;
@@ -21071,6 +21072,9 @@ span.comment_date {
 .et-db #et-boc .et_animated.infinite {
   -webkit-animation-iteration-count: infinite;
   animation-iteration-count: infinite;
+}
+.et-db #et-boc .et_had_animation {
+  position: relative;
 }
 @-webkit-keyframes et_pb_fade {
   to {
